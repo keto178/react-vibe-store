@@ -4,12 +4,6 @@
   "ignoreCommand": "node -e \"process.exit(1)\"",
   "buildCommand": "npm run build --prefix app1",
   "outputDirectory": "app1/dist",
-  "functions": {
-    "api/[...path].js": {
-      "runtime": "nodejs22.x",
-      "includeFiles": "app1/server/src/**"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
