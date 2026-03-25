@@ -114,7 +114,15 @@ export default function SingnUp({ initialMode = 'login' }) {
             })
             navigate('/Home')
         } catch (error) {
-            setStatus({ type: 'error', text: error.message })
+            console.error('[auth/register] Request failed.', {
+                email,
+                username,
+                errorMessage: error?.message || 'Unknown error'
+            })
+            setStatus({
+                type: 'error',
+                text: error?.message || 'Unable to create your account right now. Please try again.'
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -148,7 +156,14 @@ export default function SingnUp({ initialMode = 'login' }) {
             setLoginForm(EMPTY_LOGIN_FORM)
             navigate(isDashboardOwner(authResponse.user) ? '/Dashboard' : '/Home')
         } catch (error) {
-            setStatus({ type: 'error', text: error.message })
+            console.error('[auth/login] Request failed.', {
+                email,
+                errorMessage: error?.message || 'Unknown error'
+            })
+            setStatus({
+                type: 'error',
+                text: error?.message || 'Unable to log in right now. Please try again.'
+            })
         } finally {
             setIsSubmitting(false)
         }

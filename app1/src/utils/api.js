@@ -29,6 +29,10 @@ function createUnexpectedApiResponseError(message) {
     return new Error(message || 'The API returned an unexpected response.')
 }
 
+function logApiError(context, details) {
+    console.error(`[api] ${context}`, details)
+}
+
 async function readApiResponse(response) {
     if (response.status === 204) {
         return null
@@ -67,6 +71,7 @@ async function readApiResponse(response) {
 
 async function apiRequest(path, options = {}) {
     const token = getAuthToken()
+    const method = options.method || 'GET'
     const headers = {
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -77,11 +82,18 @@ async function apiRequest(path, options = {}) {
 
     try {
         response = await fetch(`${API_BASE_URL}${path}`, {
-            method: options.method || 'GET',
+            method,
             headers,
             body: options.body ? JSON.stringify(options.body) : undefined
         })
-    } catch {
+    } catch (networkError) {
+        logApiError('Network request failed.', {
+            method,
+            path,
+            baseUrl: API_BASE_URL,
+            errorMessage: networkError.message
+        })
+
         throw new Error(
             'Cannot reach the API server. Check that the backend is running locally or that the Vercel /api function is deployed correctly.'
         )
@@ -91,9 +103,29 @@ async function apiRequest(path, options = {}) {
         clearActiveSession()
     }
 
-    const data = await readApiResponse(response)
+    let data
+
+    try {
+        data = await readApiResponse(response)
+    } catch (parseError) {
+        logApiError('Response parsing failed.', {
+            method,
+            path,
+            status: response.status,
+            errorMessage: parseError.message
+        })
+        throw parseError
+    }
 
     if (!response.ok) {
+        logApiError('API response error.', {
+            method,
+            path,
+            status: response.status,
+            statusText: response.statusText,
+            message: data?.message || 'Request failed.',
+            response: data
+        })
         throw new Error(data?.message || 'Request failed.')
     }
 

@@ -134,6 +134,37 @@ function sendError(res, statusCode, message) {
     res.status(statusCode).json({ message })
 }
 
+function sanitizeRequestBody(body) {
+    if (!body || typeof body !== 'object') {
+        return {}
+    }
+
+    const sanitized = {}
+
+    for (const [key, value] of Object.entries(body)) {
+        if (/password|token|secret|authorization|cookie/i.test(key)) {
+            sanitized[key] = '[redacted]'
+            continue
+        }
+
+        sanitized[key] = typeof value === 'string' && value.length > 200
+            ? `${value.slice(0, 200)}...`
+            : value
+    }
+
+    return sanitized
+}
+
+function buildRequestMeta(req) {
+    return {
+        method: req.method,
+        path: req.originalUrl,
+        requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || '',
+        ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '',
+        userAgent: req.headers['user-agent'] || ''
+    }
+}
+
 async function authenticate(req, res, next) {
     const token = extractBearerToken(req.headers.authorization)
 
@@ -261,27 +292,46 @@ app.post('/api/auth/register', async (req, res) => {
 })
 
 app.post('/api/auth/login', async (req, res) => {
-    const store = await prepareFileStore()
-    const email = req.body.email?.trim().toLowerCase()
-    const password = req.body.password || ''
+    const email = req.body?.email?.trim().toLowerCase()
+    const password = req.body?.password || ''
+    const requestMeta = buildRequestMeta(req)
+
+    console.info('[fallback-auth/login] Received login request.', {
+        ...requestMeta,
+        email: email || '',
+        hasPassword: Boolean(password),
+        passwordLength: typeof password === 'string' ? password.length : 0
+    })
 
     if (!email || !password) {
         sendError(res, 400, 'Email and password are required.')
         return
     }
 
-    const user = store.users.find((item) => item.email === email)
+    try {
+        const store = await prepareFileStore()
+        const user = store.users.find((item) => item.email === email)
 
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-        sendError(res, 401, 'Incorrect email or password.')
-        return
+        if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+            sendError(res, 401, 'Incorrect email or password.')
+            return
+        }
+
+        res.json({
+            message: 'Login successful.',
+            token: signAuthToken(user),
+            user: sanitizeUser(user)
+        })
+    } catch (error) {
+        console.error('[fallback-auth/login] Login request failed.', {
+            ...requestMeta,
+            email,
+            requestBody: sanitizeRequestBody(req.body),
+            errorMessage: error.message,
+            stack: error.stack || ''
+        })
+        sendError(res, 500, 'Unable to process login right now. Please try again.')
     }
-
-    res.json({
-        message: 'Login successful.',
-        token: signAuthToken(user),
-        user: sanitizeUser(user)
-    })
 })
 
 app.get('/api/auth/me', authenticate, (req, res) => {
@@ -878,6 +928,31 @@ app.delete('/api/orders/:orderId', authenticate, requireAdmin, async (req, res) 
 app.use((req, res) => {
     res.status(404).json({
         message: `Cannot ${req.method} ${req.originalUrl}`
+    })
+})
+
+app.use((error, req, res, next) => {
+    if (res.headersSent) {
+        next(error)
+        return
+    }
+
+    const statusCode = res.statusCode >= 400 ? res.statusCode : 500
+    const safeMessage = statusCode >= 500
+        ? 'Unable to process this request right now. Please try again.'
+        : (error.message || 'Request failed.')
+
+    console.error('[fallback-api-error]', {
+        ...buildRequestMeta(req),
+        statusCode,
+        requestBody: sanitizeRequestBody(req.body),
+        errorMessage: error.message || '',
+        stack: error.stack || ''
+    })
+
+    res.status(statusCode).json({
+        message: safeMessage,
+        requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || undefined
     })
 })
 
