@@ -27,7 +27,7 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
         event.preventDefault()
 
         if (cartItems.length === 0) {
-            setStatus({ type: 'error', text: 'Your cart is empty. Add products before placing an order.' })
+            setStatus({ type: 'error', text: 'السلة فارغة. أضف منتجات أولاً قبل تأكيد الطلب.' })
             return
         }
 
@@ -54,11 +54,11 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
         return (
             <section className='shipping-page'>
                 <div className='shipping-empty-state'>
-                    <h1>No items ready for shipping</h1>
-                    <p>Add products to your cart first, then we can collect your shipping details.</p>
+                    <h1>لا توجد منتجات للشحن</h1>
+                    <p>أضف المنتجات إلى السلة أولاً ثم أكمل بيانات الشحن.</p>
                     <div className='shipping-empty-actions'>
-                        <Link to="/Home" className='shipping-link-btn'>Browse Products</Link>
-                        <Link to="/Cart" className='shipping-outline-btn'>Return to Cart</Link>
+                        <Link to="/Home" className='shipping-link-btn'>تصفح المنتجات</Link>
+                        <Link to="/Cart" className='shipping-outline-btn'>العودة إلى السلة</Link>
                     </div>
                 </div>
             </section>
@@ -70,16 +70,16 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
             <div className='shipping-shell'>
                 <div className='shipping-heading'>
                     <div>
-                        <p className='shipping-eyebrow'>Checkout Step 2</p>
-                        <h1>Shipping information</h1>
+                        <p className='shipping-eyebrow'>الخطوة 2 من الدفع</p>
+                        <h1>معلومات الشحن</h1>
                         <p className='shipping-subtitle'>
-                            Enter the delivery details for this order. Once you submit, the order is saved and appears on the orders page.
+                            أدخل بيانات الاستلام بشكل بسيط، ثم اضغط تأكيد الطلب.
                         </p>
                     </div>
                     <div className='shipping-mini-card'>
-                        <span>Items</span>
+                        <span>عدد المنتجات</span>
                         <strong>{summary.itemCount}</strong>
-                        <small>{formatPrice(summary.total)} total</small>
+                        <small>الإجمالي: {formatPrice(summary.total)}</small>
                     </div>
                 </div>
 
@@ -87,66 +87,66 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
                     <form className='shipping-form' onSubmit={handleSubmit}>
                         <div className='shipping-form-grid'>
                             <label className='shipping-field'>
-                                <span>Full Name</span>
+                                <span>الاسم بالكامل</span>
                                 <input
                                     type="text"
                                     name="fullName"
                                     value={form.fullName}
                                     onChange={handleChange}
-                                    placeholder='Enter your full name'
+                                    placeholder='اكتب الاسم بالكامل'
                                     required
                                 />
                             </label>
 
                             <label className='shipping-field'>
-                                <span>Email Address</span>
+                                <span>البريد الإلكتروني</span>
                                 <input
                                     type="email"
                                     name="email"
                                     value={form.email}
                                     onChange={handleChange}
-                                    placeholder='you@example.com'
+                                    placeholder='example@email.com'
                                     required
                                 />
                             </label>
 
                             <label className='shipping-field'>
-                                <span>Phone Number</span>
+                                <span>رقم الهاتف</span>
                                 <input
                                     type="tel"
                                     name="phone"
                                     value={form.phone}
                                     onChange={handleChange}
-                                    placeholder='Enter your phone number'
+                                    placeholder='اكتب رقم الهاتف'
                                     required
                                 />
                             </label>
 
                             <label className='shipping-field shipping-field-wide'>
-                                <span>Address Line 1</span>
+                                <span>العنوان</span>
                                 <input
                                     type="text"
                                     name="addressLine1"
                                     value={form.addressLine1}
                                     onChange={handleChange}
-                                    placeholder='Street address'
+                                    placeholder='الشارع واسم المنطقة'
                                     required
                                 />
                             </label>
 
                             <label className='shipping-field shipping-field-wide'>
-                                <span>Address Line 2</span>
+                                <span>تفاصيل إضافية (اختياري)</span>
                                 <input
                                     type="text"
                                     name="addressLine2"
                                     value={form.addressLine2}
                                     onChange={handleChange}
-                                    placeholder='Apartment, suite, or landmark (optional)'
+                                    placeholder='رقم شقة أو علامة مميزة'
                                 />
                             </label>
 
                             <label className='shipping-field'>
-                                <span>City</span>
+                                <span>المدينة</span>
                                 <input
                                     type="text"
                                     name="city"
@@ -157,7 +157,7 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
                             </label>
 
                             <label className='shipping-field'>
-                                <span>State</span>
+                                <span>المحافظة</span>
                                 <input
                                     type="text"
                                     name="state"
@@ -168,7 +168,7 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
                             </label>
 
                             <label className='shipping-field'>
-                                <span>Postal Code</span>
+                                <span>الرقم البريدي</span>
                                 <input
                                     type="text"
                                     name="postalCode"
@@ -179,24 +179,24 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
                             </label>
 
                             <label className='shipping-field'>
-                                <span>Country</span>
+                                <span>البلد</span>
                                 <input
                                     type="text"
                                     name="country"
                                     value={form.country}
-                                    onChange={handleChange}
+                                    readOnly
                                     required
                                 />
                             </label>
 
                             <label className='shipping-field shipping-field-wide'>
-                                <span>Order Notes</span>
+                                <span>ملاحظات الطلب (اختياري)</span>
                                 <textarea
                                     name="notes"
                                     value={form.notes}
                                     onChange={handleChange}
                                     rows="4"
-                                    placeholder='Optional delivery notes or requests'
+                                    placeholder='أي ملاحظات خاصة بالتوصيل'
                                 />
                             </label>
                         </div>
@@ -206,9 +206,9 @@ export default function ShippingInformation({ activeSession, cartItems = [], onP
                         )}
 
                         <div className='shipping-actions'>
-                            <Link to="/Cart" className='shipping-outline-btn'>Back to Cart</Link>
+                            <Link to="/Cart" className='shipping-outline-btn'>رجوع للسلة</Link>
                             <button type="submit" className='shipping-submit-btn' disabled={isSubmitting}>
-                                {isSubmitting ? 'Placing Order...' : 'Submit Order'}
+                                {isSubmitting ? 'جاري تأكيد الطلب...' : 'تأكيد الطلب'}
                             </button>
                         </div>
                     </form>

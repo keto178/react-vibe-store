@@ -17,7 +17,7 @@ export function createProductForm(categories = []) {
         discount: '',
         categoryId: categories[0]?.id || '',
         colorInput: '#5dc0ff',
-        colors: ['#5dc0ff'],
+        colors: [],
         nicotineLevels: [],
         imageFile: null,
         existingImage: ''

@@ -8,7 +8,7 @@ export function createShippingForm(activeSession) {
         city: '',
         state: '',
         postalCode: '',
-        country: 'United States',
+        country: 'مصر',
         notes: ''
     }
 }

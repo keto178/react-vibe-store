@@ -125,12 +125,11 @@ export function useDashboardManager({
     const handleRemoveProductColor = (colorToRemove) => {
         setProductForm((currentForm) => {
             const updatedColors = currentForm.colors.filter((color) => color !== colorToRemove)
-            const safeColors = updatedColors.length > 0 ? updatedColors : [currentForm.colorInput]
 
             return {
                 ...currentForm,
-                colors: safeColors,
-                colorInput: safeColors[0]
+                colors: updatedColors,
+                colorInput: updatedColors[0] || currentForm.colorInput
             }
         })
         setProductStatus({ type: '', text: '' })

@@ -2,19 +2,12 @@ import bcrypt from 'bcryptjs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import env from '../config/env.js'
-import { DEFAULT_CATEGORIES } from '../constants/defaultData.js'
 
 const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
 const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
 const MEMORY_STORE_KEY = '__APP1_SERVER_MEMORY_STORE__'
 const isServerlessDeployment = process.env.VERCEL === '1'
 const DEFAULT_ADMIN_USER_ID = 'usr-admin-default'
-const DEFAULT_CATEGORY_ID_BY_KEY = new Map(
-    DEFAULT_CATEGORIES.map((category) => [
-        `${category.group || 'Device'}:${category.name}`,
-        category.id || ''
-    ])
-)
 
 const EMPTY_STORE = {
     users: [],
@@ -85,18 +78,6 @@ export async function writeStore(store) {
     await writeFile(DATA_FILE_URL, JSON.stringify(normalizeStoreShape(store), null, 2), 'utf8')
 }
 
-function sanitizeCategory(category) {
-    return {
-        name: category.name,
-        group: category.group || 'Device',
-        image: category.image
-    }
-}
-
-function resolveDefaultCategoryId(name, group) {
-    return DEFAULT_CATEGORY_ID_BY_KEY.get(`${group || 'Device'}:${name}`) || ''
-}
-
 export function sanitizeUser(user) {
     return {
         id: user.id,
@@ -146,21 +127,9 @@ export async function prepareFileStore() {
         }
     }
 
-    if (store.categories.length === 0) {
-        for (const category of DEFAULT_CATEGORIES) {
-            store.categories.push({
-                ...sanitizeCategory(category),
-                id: category.id || createId('cat'),
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            })
-            hasChanges = true
-        }
-    }
-
     for (const category of store.categories) {
         if (!category.id) {
-            category.id = resolveDefaultCategoryId(category.name, category.group) || createId('cat')
+            category.id = createId('cat')
             category.updatedAt = new Date().toISOString()
             hasChanges = true
         }

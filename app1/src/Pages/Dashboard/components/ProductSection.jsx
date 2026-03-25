@@ -8,7 +8,7 @@ const EMPTY_PRODUCT_FORM = {
     discount: '',
     categoryId: '',
     colorInput: '#5dc0ff',
-    colors: ['#5dc0ff'],
+    colors: [],
     nicotineLevels: [],
     existingImage: ''
 }

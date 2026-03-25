@@ -11,9 +11,9 @@ export default function ShippingSummaryPanel({ cartItems = [], summary = EMPTY_S
     return (
         <aside className='shipping-summary'>
             <div className='shipping-summary-card'>
-                <span className='shipping-summary-label'>Order Summary</span>
+                <span className='shipping-summary-label'>ملخص الطلب</span>
                 <h2>{formatPrice(summary.total)}</h2>
-                <p>{summary.itemCount} items ready to ship.</p>
+                <p>{summary.itemCount} منتج جاهز للشحن.</p>
             </div>
 
             <div className='shipping-items-list'>
@@ -32,7 +32,7 @@ export default function ShippingSummaryPanel({ cartItems = [], summary = EMPTY_S
                                         style={{ backgroundColor: item.selectedColor }}
                                         aria-hidden='true'
                                     />
-                                    Selected color
+                                    اللون المختار
                                 </small>
                             </div>
                         </article>
