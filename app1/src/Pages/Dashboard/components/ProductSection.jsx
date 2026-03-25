@@ -1,11 +1,28 @@
 import React from 'react'
 import { formatNicotineLevel, MAX_NICOTINE_LEVELS, NICOTINE_OPTIONS } from '../../../utils/nicotine'
 
+const EMPTY_PRODUCT_FORM = {
+    name: '',
+    description: '',
+    price: '',
+    discount: '',
+    categoryId: '',
+    colorInput: '#5dc0ff',
+    colors: ['#5dc0ff'],
+    nicotineLevels: [],
+    existingImage: ''
+}
+
+const EMPTY_STATUS = {
+    type: '',
+    text: ''
+}
+
 export default function ProductSection({
-    categories,
+    categories = [],
     sectionRef,
-    form,
-    status,
+    form = EMPTY_PRODUCT_FORM,
+    status = EMPTY_STATUS,
     isSaving,
     isEditing,
     imageInputRef,

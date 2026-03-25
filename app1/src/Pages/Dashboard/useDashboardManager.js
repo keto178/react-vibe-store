@@ -11,8 +11,8 @@ import {
 } from './dashboardForms'
 
 export function useDashboardManager({
-    categories,
-    products,
+    categories = [],
+    products = [],
     onAddCategory,
     onUpdateCategory,
     onDeleteCategory,

@@ -9,10 +9,10 @@ import Orders from '../Pages/Orders/Orders'
 import ProtectedRoute from './ProtectedRoute'
 
 export default function AppRoutes({
-    categories,
-    products,
-    cartItems,
-    orders,
+    categories = [],
+    products = [],
+    cartItems = [],
+    orders = [],
     onAddToCart,
     onUpdateCartQuantity,
     onRemoveFromCart,

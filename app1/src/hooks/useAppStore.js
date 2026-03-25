@@ -25,6 +25,20 @@ function ensureArray(value) {
     return Array.isArray(value) ? value : []
 }
 
+function ensureRecord(value, recordName) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error(`The server returned an invalid ${recordName}.`)
+    }
+
+    return value
+}
+
+function logStoreError(error) {
+    if (import.meta.env.DEV) {
+        console.error(error)
+    }
+}
+
 export function useAppStore(activeSession) {
     const [products, setProducts] = useState([])
     const [cartItems, setCartItems] = useState([])
@@ -103,12 +117,12 @@ export function useAppStore(activeSession) {
                     return
                 }
 
-                if (!hasSession) {
-                    setCartItems([])
-                    setOrders([])
-                }
+                setCategories([])
+                setProducts([])
+                setCartItems([])
+                setOrders([])
 
-                console.error(error)
+                logStoreError(error)
             }
         }
 
@@ -125,10 +139,11 @@ export function useAppStore(activeSession) {
         }
 
         const response = await createProductApi(product)
+        const savedProduct = ensureRecord(response?.product, 'product')
 
-        setProducts((currentProducts) => [response.product, ...currentProducts])
+        setProducts((currentProducts) => [savedProduct, ...currentProducts])
 
-        return response.product
+        return savedProduct
     }
 
     const handleUpdateProduct = async (updatedProduct) => {
@@ -137,10 +152,11 @@ export function useAppStore(activeSession) {
         }
 
         const response = await updateProductApi(updatedProduct.id, updatedProduct)
+        const savedProduct = ensureRecord(response?.product, 'product')
 
         setProducts((currentProducts) =>
             currentProducts.map((product) => (
-                product.id === response.product.id ? response.product : product
+                product.id === savedProduct.id ? savedProduct : product
             ))
         )
 
@@ -148,7 +164,7 @@ export function useAppStore(activeSession) {
             await refreshCart()
         }
 
-        return response.product
+        return savedProduct
     }
 
     const handleDeleteProduct = async (productId) => {
@@ -173,10 +189,11 @@ export function useAppStore(activeSession) {
         }
 
         const response = await createCategoryApi(category)
+        const savedCategory = ensureRecord(response?.category, 'category')
 
-        setCategories((currentCategories) => [response.category, ...currentCategories])
+        setCategories((currentCategories) => [savedCategory, ...currentCategories])
 
-        return response.category
+        return savedCategory
     }
 
     const handleUpdateCategory = async (updatedCategory) => {
@@ -257,7 +274,7 @@ export function useAppStore(activeSession) {
 
             setCartItems(ensureArray(response?.items))
         } catch (error) {
-            console.error(error)
+            logStoreError(error)
         }
     }
 
@@ -274,7 +291,7 @@ export function useAppStore(activeSession) {
             const response = await removeCartItemApi(cartItemId)
             setCartItems(ensureArray(response?.items))
         } catch (error) {
-            console.error(error)
+            logStoreError(error)
         }
     }
 
@@ -295,13 +312,14 @@ export function useAppStore(activeSession) {
 
         try {
             const response = await checkoutApi(shippingDetails)
+            const savedOrder = ensureRecord(response?.order, 'order')
 
-            setOrders((currentOrders) => [response.order, ...currentOrders])
+            setOrders((currentOrders) => [savedOrder, ...currentOrders])
             setCartItems([])
 
             return {
                 ok: true,
-                order: response.order
+                order: savedOrder
             }
         } catch (error) {
             return {
@@ -322,9 +340,9 @@ export function useAppStore(activeSession) {
 
         try {
             const response = await markOrdersAsSeenApi()
-            setOrders(response.orders)
+            setOrders(ensureArray(response?.orders))
         } catch (error) {
-            console.error(error)
+            logStoreError(error)
         }
     }
 
@@ -345,10 +363,11 @@ export function useAppStore(activeSession) {
 
         try {
             const response = await updateOrderStatusApi(orderId, nextStatus)
+            const savedOrder = ensureRecord(response?.order, 'order')
 
             setOrders((currentOrders) =>
                 currentOrders.map((order) => (
-                    order.id === response.order.id ? response.order : order
+                    order.id === savedOrder.id ? savedOrder : order
                 ))
             )
 

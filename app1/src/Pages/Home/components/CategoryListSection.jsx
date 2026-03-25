@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function CategoryListSection({ title, subtitle, categories, selectedCategoryId, onSelectCategory }) {
+export default function CategoryListSection({ title, subtitle, categories = [], selectedCategoryId, onSelectCategory }) {
     return (
         <div className='home-category-list'>
             <div className='home-category-header'>

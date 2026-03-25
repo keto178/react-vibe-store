@@ -2,7 +2,12 @@ import React from 'react'
 import { getDiscountedPrice } from '../../../utils/orders'
 import { formatPrice } from '../../../utils/currency'
 
-export default function ShippingSummaryPanel({ cartItems, summary }) {
+const EMPTY_SUMMARY = {
+    itemCount: 0,
+    total: 0
+}
+
+export default function ShippingSummaryPanel({ cartItems = [], summary = EMPTY_SUMMARY }) {
     return (
         <aside className='shipping-summary'>
             <div className='shipping-summary-card'>

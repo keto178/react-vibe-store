@@ -1,7 +1,7 @@
 import React from 'react'
 import Card from '../../Card/Card'
 
-export default function ProductListSection({ products, onEdit, onDelete }) {
+export default function ProductListSection({ products = [], onEdit, onDelete }) {
     return (
         <section className='dashboard-products'>
             <div className='dashboard-products-header'>

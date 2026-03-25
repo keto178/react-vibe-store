@@ -65,7 +65,7 @@ export default function Orders({ orders = [], onMarkOrdersAsSeen, onUpdateOrderS
                 <div className='orders-highlight-banner'>
                     <strong>Order {highlightedOrder.id} was placed successfully.</strong>
                     <span>
-                        Shipping to {highlightedOrder.customer.fullName} at {formatPrice(highlightedOrder.summary.total)}.
+                        Shipping to {highlightedOrder.customer?.fullName || 'your saved address'} at {formatPrice(highlightedOrder.summary?.total || 0)}.
                     </span>
                 </div>
             )}

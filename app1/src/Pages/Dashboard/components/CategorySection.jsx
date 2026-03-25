@@ -1,10 +1,21 @@
 import React from 'react'
 
+const EMPTY_CATEGORY_FORM = {
+    name: '',
+    group: 'Device',
+    existingImage: ''
+}
+
+const EMPTY_STATUS = {
+    type: '',
+    text: ''
+}
+
 export default function CategorySection({
-    categories,
+    categories = [],
     sectionRef,
-    form,
-    status,
+    form = EMPTY_CATEGORY_FORM,
+    status = EMPTY_STATUS,
     isSaving,
     isEditing,
     imageInputRef,

@@ -30,6 +30,46 @@ function resolveApiBaseUrl() {
 
 const API_BASE_URL = resolveApiBaseUrl()
 
+function createUnexpectedApiResponseError(message) {
+    return new Error(message || 'The API returned an unexpected response.')
+}
+
+async function readApiResponse(response) {
+    if (response.status === 204) {
+        return null
+    }
+
+    const contentType = response.headers.get('content-type') || ''
+
+    if (contentType.includes('application/json')) {
+        try {
+            return await response.json()
+        } catch {
+            throw createUnexpectedApiResponseError(
+                'The API returned invalid JSON. Check the server deployment and try again.'
+            )
+        }
+    }
+
+    const text = (await response.text()).trim()
+
+    if (!response.ok) {
+        return { message: text || 'Request failed.' }
+    }
+
+    if (!text) {
+        return null
+    }
+
+    const isHtmlResponse = contentType.includes('text/html') || /^<!doctype html>|^<html/i.test(text)
+
+    throw createUnexpectedApiResponseError(
+        isHtmlResponse
+            ? 'The API returned HTML instead of JSON. Check the Vercel API routing and environment variables.'
+            : 'The API returned an unexpected non-JSON response.'
+    )
+}
+
 async function apiRequest(path, options = {}) {
     const token = getAuthToken()
     const headers = {
@@ -52,20 +92,17 @@ async function apiRequest(path, options = {}) {
         )
     }
 
-    const contentType = response.headers.get('content-type') || ''
-    const data = contentType.includes('application/json')
-        ? await response.json()
-        : { message: await response.text() }
-
     if (response.status === 401) {
         clearActiveSession()
     }
 
+    const data = await readApiResponse(response)
+
     if (!response.ok) {
-        throw new Error(data.message || 'Request failed.')
+        throw new Error(data?.message || 'Request failed.')
     }
 
-    return data
+    return data || {}
 }
 
 export function registerUserApi(payload) {

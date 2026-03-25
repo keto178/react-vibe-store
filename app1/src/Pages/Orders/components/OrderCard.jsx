@@ -9,7 +9,21 @@ function formatStatusLabel(status) {
     return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
-export default function OrderCard({ order, highlightedOrderId, isAdmin, onUpdateOrderStatus, onDeleteOrder }) {
+const EMPTY_ORDER_SUMMARY = {
+    itemCount: 0,
+    subtotal: 0,
+    shippingFee: 0,
+    total: 0
+}
+
+export default function OrderCard({ order = {}, highlightedOrderId, isAdmin, onUpdateOrderStatus, onDeleteOrder }) {
+    const customer = order.customer || {}
+    const summary = {
+        ...EMPTY_ORDER_SUMMARY,
+        ...(order.summary || {})
+    }
+    const items = Array.isArray(order.items) ? order.items : []
+    const createdAtLabel = order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Unknown date'
     const [selectedStatus, setSelectedStatus] = useState(order.status || 'pending')
     const [statusMessage, setStatusMessage] = useState('')
 
@@ -34,13 +48,13 @@ export default function OrderCard({ order, highlightedOrderId, isAdmin, onUpdate
             <div className='order-card-top'>
                 <div>
                     <p className='order-card-label'>Order ID</p>
-                    <h2>{order.id}</h2>
-                    <p className='order-card-date'>{new Date(order.createdAt).toLocaleString()}</p>
+                    <h2>{order.id || 'Unknown order'}</h2>
+                    <p className='order-card-date'>{createdAtLabel}</p>
                 </div>
                 <div className='order-card-actions'>
                     <div className='order-card-total'>
                         <span>Total</span>
-                        <strong>{formatPrice(order.summary.total)}</strong>
+                        <strong>{formatPrice(summary.total)}</strong>
                     </div>
                 </div>
             </div>
@@ -48,19 +62,19 @@ export default function OrderCard({ order, highlightedOrderId, isAdmin, onUpdate
             <div className='order-card-grid'>
                 <section className='order-info-panel'>
                     <h3>Shipping details</h3>
-                    <p><strong>Name:</strong> {order.customer.fullName}</p>
-                    <p><strong>Email:</strong> {order.customer.email}</p>
-                    <p><strong>Phone:</strong> {order.customer.phone}</p>
-                    <p><strong>Address:</strong> {formatShippingAddress(order.customer)}</p>
-                    {order.customer.notes && <p><strong>Notes:</strong> {order.customer.notes}</p>}
+                    <p><strong>Name:</strong> {customer.fullName || 'Not provided'}</p>
+                    <p><strong>Email:</strong> {customer.email || 'Not provided'}</p>
+                    <p><strong>Phone:</strong> {customer.phone || 'Not provided'}</p>
+                    <p><strong>Address:</strong> {formatShippingAddress(customer) || 'Not provided'}</p>
+                    {customer.notes && <p><strong>Notes:</strong> {customer.notes}</p>}
                 </section>
 
                 <section className='order-info-panel'>
                     <h3>Order summary</h3>
-                    <p><strong>Items:</strong> {order.summary.itemCount}</p>
-                    <p><strong>Subtotal:</strong> {formatPrice(order.summary.subtotal)}</p>
-                    <p><strong>Shipping:</strong> {formatPrice(order.summary.shippingFee)}</p>
-                    <p><strong>Total:</strong> {formatPrice(order.summary.total)}</p>
+                    <p><strong>Items:</strong> {summary.itemCount}</p>
+                    <p><strong>Subtotal:</strong> {formatPrice(summary.subtotal)}</p>
+                    <p><strong>Shipping:</strong> {formatPrice(summary.shippingFee)}</p>
+                    <p><strong>Total:</strong> {formatPrice(summary.total)}</p>
                 </section>
 
                 <section className='order-info-panel'>
@@ -92,7 +106,7 @@ export default function OrderCard({ order, highlightedOrderId, isAdmin, onUpdate
             </div>
 
             <div className='order-items-list'>
-                {order.items.map((item) => (
+                {items.map((item) => (
                     <div key={item.id} className='order-item-row'>
                         <img src={item.image} alt={item.name} />
                         <div className='order-item-copy'>
