@@ -118,14 +118,19 @@ async function apiRequest(path, options = {}) {
     }
 
     if (!response.ok) {
-        logApiError('API response error.', {
-            method,
-            path,
-            status: response.status,
-            statusText: response.statusText,
-            message: data?.message || 'Request failed.',
-            response: data
-        })
+        const isExpectedSessionRefresh401 = method === 'GET' && path === '/auth/me' && response.status === 401
+
+        if (!isExpectedSessionRefresh401) {
+            logApiError('API response error.', {
+                method,
+                path,
+                status: response.status,
+                statusText: response.statusText,
+                message: data?.message || 'Request failed.',
+                response: data
+            })
+        }
+
         throw new Error(data?.message || 'Request failed.')
     }
 
