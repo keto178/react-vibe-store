@@ -21,6 +21,10 @@ function isAllowedDevOrigin(origin) {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
 }
 
+function isAllowedVercelOrigin(origin) {
+    return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+}
+
 function extractBearerToken(authorizationHeader = '') {
     if (!authorizationHeader.startsWith('Bearer ')) {
         return ''
@@ -188,6 +192,11 @@ app.use(cors({
         }
 
         if (env.nodeEnv !== 'production' && isAllowedDevOrigin(origin)) {
+            callback(null, true)
+            return
+        }
+
+        if (isAllowedVercelOrigin(origin)) {
             callback(null, true)
             return
         }

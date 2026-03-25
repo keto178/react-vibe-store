@@ -21,6 +21,37 @@ npm run dev
 
 The Vite dev server proxies `/api` requests to `http://localhost:5000`.
 
+## Vercel Deployment
+
+This project is a Vite app, not Create React App.
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- SPA routes are handled through the repository-level [`vercel.json`](../vercel.json)
+- The `/api` backend is exposed through a Vercel serverless function in [`/api/[...path].js`](../api/%5B...path%5D.js)
+
+If you deploy the whole repository to Vercel, the included `vercel.json` already points Vercel to the nested `app1` frontend and keeps client-side routing working.
+
+For the backend to work on Vercel, add these environment variables in the Vercel project settings:
+
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `ADMIN_USERNAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+- `ADMIN_NOTIFICATION_EMAIL`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+
+If you use a custom domain instead of `*.vercel.app`, also set:
+
+- `CLIENT_ORIGIN`
+
 ## Backend
 
 ```bash
