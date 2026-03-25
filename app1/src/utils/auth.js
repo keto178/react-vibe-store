@@ -1,5 +1,7 @@
 export const SESSION_STORAGE_KEY = 'app1_active_user'
 const sessionListeners = new Set()
+let cachedSessionRaw = null
+let cachedSessionValue = null
 
 export function normalizeUsername(username) {
     return username?.trim().toLowerCase() || ''
@@ -34,7 +36,13 @@ export function getActiveSession() {
     const savedSession = window.localStorage.getItem(SESSION_STORAGE_KEY)
 
     if (!savedSession) {
+        cachedSessionRaw = null
+        cachedSessionValue = null
         return null
+    }
+
+    if (savedSession === cachedSessionRaw) {
+        return cachedSessionValue
     }
 
     try {
@@ -42,12 +50,19 @@ export function getActiveSession() {
 
         if (!parsedSession?.token || !parsedSession?.email || parsedSession?.authMode === 'fallback') {
             window.localStorage.removeItem(SESSION_STORAGE_KEY)
+            cachedSessionRaw = null
+            cachedSessionValue = null
             return null
         }
 
-        return parsedSession
+        cachedSessionRaw = savedSession
+        cachedSessionValue = parsedSession
+
+        return cachedSessionValue
     } catch {
         window.localStorage.removeItem(SESSION_STORAGE_KEY)
+        cachedSessionRaw = null
+        cachedSessionValue = null
         return null
     }
 }
@@ -68,7 +83,11 @@ export function saveActiveSession(authPayload) {
         return null
     }
 
-    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+    const serializedSession = JSON.stringify(session)
+
+    window.localStorage.setItem(SESSION_STORAGE_KEY, serializedSession)
+    cachedSessionRaw = serializedSession
+    cachedSessionValue = session
     notifySessionListeners()
 
     return session
@@ -80,6 +99,8 @@ export function clearActiveSession() {
     }
 
     window.localStorage.removeItem(SESSION_STORAGE_KEY)
+    cachedSessionRaw = null
+    cachedSessionValue = null
     notifySessionListeners()
 }
 

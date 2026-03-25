@@ -8,6 +8,7 @@ const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
 const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
 const MEMORY_STORE_KEY = '__APP1_SERVER_MEMORY_STORE__'
 const isServerlessDeployment = process.env.VERCEL === '1'
+const DEFAULT_ADMIN_USER_ID = 'usr-admin-default'
 
 const EMPTY_STORE = {
     users: [],
@@ -107,7 +108,7 @@ export async function prepareFileStore() {
 
     if (!existingAdmin) {
         store.users.push({
-            id: createId('usr'),
+            id: DEFAULT_ADMIN_USER_ID,
             username: adminUsername,
             email: adminEmail,
             passwordHash: await bcrypt.hash(env.adminPassword, 10),
@@ -120,11 +121,13 @@ export async function prepareFileStore() {
         const passwordMatches = await bcrypt.compare(env.adminPassword, existingAdmin.passwordHash)
 
         if (
+            existingAdmin.id !== DEFAULT_ADMIN_USER_ID ||
             existingAdmin.role !== 'admin' ||
             existingAdmin.email !== adminEmail ||
             existingAdmin.username !== adminUsername ||
             !passwordMatches
         ) {
+            existingAdmin.id = DEFAULT_ADMIN_USER_ID
             existingAdmin.role = 'admin'
             existingAdmin.email = adminEmail
             existingAdmin.username = adminUsername
