@@ -7,7 +7,7 @@ import { formatPrice } from '../../utils/currency'
 import { createShippingForm } from './shippingForm'
 import ShippingSummaryPanel from './components/ShippingSummaryPanel'
 
-export default function ShippingInformation({ cartItems, onPlaceOrder }) {
+export default function ShippingInformation({ cartItems = [], onPlaceOrder }) {
     const navigate = useNavigate()
     const activeSession = getActiveSession()
     const [form, setForm] = useState(() => createShippingForm(activeSession))

@@ -5,7 +5,7 @@ import { getActiveSession, isDashboardOwner } from '../../utils/auth'
 import { formatPrice } from '../../utils/currency'
 import OrderCard from './components/OrderCard'
 
-export default function Orders({ orders, onMarkOrdersAsSeen, onUpdateOrderStatus, onDeleteOrder }) {
+export default function Orders({ orders = [], onMarkOrdersAsSeen, onUpdateOrderStatus, onDeleteOrder }) {
     const activeSession = getActiveSession()
     const isAdmin = isDashboardOwner(activeSession)
     const [searchParams] = useSearchParams()

@@ -21,6 +21,10 @@ import {
     updateProductApi
 } from '../utils/api'
 
+function ensureArray(value) {
+    return Array.isArray(value) ? value : []
+}
+
 export function useAppStore(activeSession) {
     const [products, setProducts] = useState([])
     const [cartItems, setCartItems] = useState([])
@@ -40,8 +44,8 @@ export function useAppStore(activeSession) {
             fetchProductsApi()
         ])
 
-        setCategories(categoriesResponse.categories)
-        setProducts(productsResponse.products)
+        setCategories(ensureArray(categoriesResponse?.categories))
+        setProducts(ensureArray(productsResponse?.products))
     }
 
     const refreshCart = async () => {
@@ -51,7 +55,7 @@ export function useAppStore(activeSession) {
         }
 
         const response = await fetchCartApi()
-        setCartItems(response.items)
+        setCartItems(ensureArray(response?.items))
     }
 
     useEffect(() => {
@@ -68,8 +72,8 @@ export function useAppStore(activeSession) {
                     return
                 }
 
-                setCategories(categoriesResponse.categories)
-                setProducts(productsResponse.products)
+                setCategories(ensureArray(categoriesResponse?.categories))
+                setProducts(ensureArray(productsResponse?.products))
 
                 if (isFallbackSession) {
                     setCartItems([])
@@ -92,8 +96,8 @@ export function useAppStore(activeSession) {
                     return
                 }
 
-                setCartItems(cartResponse.items)
-                setOrders(ordersResponse.orders)
+                setCartItems(ensureArray(cartResponse?.items))
+                setOrders(ensureArray(ordersResponse?.orders))
             } catch (error) {
                 if (isCancelled) {
                     return
@@ -224,7 +228,7 @@ export function useAppStore(activeSession) {
                 selectedColor
             })
 
-            setCartItems(response.items)
+            setCartItems(ensureArray(response?.items))
 
             return {
                 ok: true
@@ -251,7 +255,7 @@ export function useAppStore(activeSession) {
                 ? await removeCartItemApi(cartItemId)
                 : await updateCartItemApi(cartItemId, { quantity: nextQuantity })
 
-            setCartItems(response.items)
+            setCartItems(ensureArray(response?.items))
         } catch (error) {
             console.error(error)
         }
@@ -268,7 +272,7 @@ export function useAppStore(activeSession) {
 
         try {
             const response = await removeCartItemApi(cartItemId)
-            setCartItems(response.items)
+            setCartItems(ensureArray(response?.items))
         } catch (error) {
             console.error(error)
         }
@@ -397,8 +401,8 @@ export function useAppStore(activeSession) {
         cartItems,
         categories,
         orders,
-        cartCount: cartItems.reduce((total, item) => total + item.quantity, 0),
-        unreadOrdersCount: orders.filter((order) => order.isNew).length,
+        cartCount: ensureArray(cartItems).reduce((total, item) => total + item.quantity, 0),
+        unreadOrdersCount: ensureArray(orders).filter((order) => order.isNew).length,
         handleAddProduct,
         handleUpdateProduct,
         handleDeleteProduct,

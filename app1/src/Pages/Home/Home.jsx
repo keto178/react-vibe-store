@@ -6,7 +6,7 @@ import Card from '../Card/Card'
 import CategoryListSection from './components/CategoryListSection'
 import AddToCartToast from './components/AddToCartToast'
 
-export default function Home({ categories = [], products, onAddToCart }) {
+export default function Home({ categories = [], products = [], onAddToCart }) {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const productsSectionRef = useRef(null)

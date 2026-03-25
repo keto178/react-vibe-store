@@ -5,7 +5,7 @@ import { getDiscountedPrice } from '../../utils/orders'
 import { formatPrice } from '../../utils/currency'
 import CartItemCard from './components/CartItemCard'
 
-export default function PlecOurder({ cartItems, onUpdateCartQuantity, onRemoveFromCart }) {
+export default function PlecOurder({ cartItems = [], onUpdateCartQuantity, onRemoveFromCart }) {
     const navigate = useNavigate()
     const total = cartItems.reduce((sum, item) => {
         return sum + (getDiscountedPrice(item) * item.quantity)
