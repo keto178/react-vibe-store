@@ -1,20 +1,48 @@
-import app from '../app1/server/src/app.js'
-import { connectToDatabase, getDatabaseDebugState } from '../app1/server/src/config/db.js'
-import { getConfigDiagnostics } from '../app1/server/src/config/env.js'
-import fileApp, { prepareFileApi } from '../app1/server/src/fileApp.js'
-import { seedDefaults } from '../app1/server/src/services/seedService.js'
-
-const isVercelDeployment = process.env.VERCEL === '1'
 let selectedAppPromise = null
+let modulesPromise = null
 let hasLoggedStartupDiagnostics = false
 
-function logStartupDiagnostics() {
+const isVercelDeployment = process.env.VERCEL === '1'
+
+function buildRequestMeta(req) {
+    return {
+        method: req.method,
+        path: req.url,
+        requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || ''
+    }
+}
+
+async function loadServerModules() {
+    if (!modulesPromise) {
+        modulesPromise = Promise.all([
+            import('../app1/server/src/app.js'),
+            import('../app1/server/src/config/db.js'),
+            import('../app1/server/src/config/env.js'),
+            import('../app1/server/src/fileApp.js'),
+            import('../app1/server/src/services/seedService.js')
+        ]).then(([appModule, dbModule, envModule, fileAppModule, seedModule]) => ({
+            app: appModule.default,
+            connectToDatabase: dbModule.connectToDatabase,
+            getDatabaseDebugState: dbModule.getDatabaseDebugState,
+            getConfigDiagnostics: envModule.getConfigDiagnostics,
+            fileApp: fileAppModule.default,
+            prepareFileApi: fileAppModule.prepareFileApi,
+            seedDefaults: seedModule.seedDefaults
+        })).catch((error) => {
+            modulesPromise = null
+            throw error
+        })
+    }
+
+    return modulesPromise
+}
+
+function logStartupDiagnostics(diagnostics) {
     if (hasLoggedStartupDiagnostics) {
         return
     }
 
     hasLoggedStartupDiagnostics = true
-    const diagnostics = getConfigDiagnostics()
 
     if (diagnostics.missing.length > 0) {
         console.error('[api/startup] Missing environment variables.', diagnostics)
@@ -28,16 +56,18 @@ function logStartupDiagnostics() {
     }
 }
 
-function buildRequestMeta(req) {
-    return {
-        method: req.method,
-        path: req.url,
-        requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || ''
-    }
-}
-
 async function resolveServerApp() {
-    logStartupDiagnostics()
+    const {
+        app,
+        connectToDatabase,
+        getDatabaseDebugState,
+        getConfigDiagnostics,
+        fileApp,
+        prepareFileApi,
+        seedDefaults
+    } = await loadServerModules()
+
+    logStartupDiagnostics(getConfigDiagnostics())
 
     try {
         await connectToDatabase()
@@ -79,7 +109,7 @@ async function getSelectedApp() {
     return selectedAppPromise
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     try {
         const selectedApp = await getSelectedApp()
         return selectedApp(req, res)
