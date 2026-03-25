@@ -109,7 +109,7 @@ async function getSelectedApp() {
     return selectedAppPromise
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     try {
         const selectedApp = await getSelectedApp()
         return selectedApp(req, res)
