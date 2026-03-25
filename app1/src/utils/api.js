@@ -131,6 +131,10 @@ export function loginUserApi(payload) {
     })
 }
 
+export function fetchCurrentUserApi() {
+    return apiRequest('/auth/me')
+}
+
 export function fetchCategoriesApi() {
     return apiRequest('/categories')
 }

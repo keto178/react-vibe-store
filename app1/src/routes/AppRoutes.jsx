@@ -9,6 +9,7 @@ import Orders from '../Pages/Orders/Orders'
 import ProtectedRoute from './ProtectedRoute'
 
 export default function AppRoutes({
+    activeSession,
     categories = [],
     products = [],
     cartItems = [],
@@ -34,7 +35,7 @@ export default function AppRoutes({
             <Route
                 path="/Cart"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute activeSession={activeSession}>
                         <PlecOurder
                             cartItems={cartItems}
                             onUpdateCartQuantity={onUpdateCartQuantity}
@@ -46,7 +47,7 @@ export default function AppRoutes({
             <Route
                 path="/PlecOurder"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute activeSession={activeSession}>
                         <PlecOurder
                             cartItems={cartItems}
                             onUpdateCartQuantity={onUpdateCartQuantity}
@@ -58,8 +59,10 @@ export default function AppRoutes({
             <Route
                 path="/Shipping"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute activeSession={activeSession}>
                         <ShippingInformation
+                            key={activeSession?.id || 'guest-shipping'}
+                            activeSession={activeSession}
                             cartItems={cartItems}
                             onPlaceOrder={onPlaceOrder}
                         />
@@ -69,8 +72,9 @@ export default function AppRoutes({
             <Route
                 path="/Orders"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute activeSession={activeSession}>
                         <Orders
+                            activeSession={activeSession}
                             orders={orders}
                             onMarkOrdersAsSeen={onMarkOrdersAsSeen}
                             onUpdateOrderStatus={onUpdateOrderStatus}
@@ -84,8 +88,9 @@ export default function AppRoutes({
             <Route
                 path="/Dashboard"
                 element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute activeSession={activeSession} requireAdmin>
                         <Dashboard
+                            activeSession={activeSession}
                             categories={categories}
                             products={products}
                             onAddCategory={onAddCategory}

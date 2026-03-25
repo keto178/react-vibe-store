@@ -1,21 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import './Orders.css'
-import { getActiveSession, isDashboardOwner } from '../../utils/auth'
+import { isDashboardOwner } from '../../utils/auth'
 import { formatPrice } from '../../utils/currency'
 import OrderCard from './components/OrderCard'
 
-export default function Orders({ orders = [], onMarkOrdersAsSeen, onUpdateOrderStatus, onDeleteOrder }) {
-    const activeSession = getActiveSession()
+export default function Orders({ activeSession, orders = [], onMarkOrdersAsSeen, onUpdateOrderStatus, onDeleteOrder }) {
     const isAdmin = isDashboardOwner(activeSession)
     const [searchParams] = useSearchParams()
     const highlightedOrderId = searchParams.get('highlight') || ''
-    const [reviewedOrdersCount] = useState(() => (
-        isAdmin ? orders.filter((order) => order.isNew).length : 0
-    ))
     const hasUnreadOrders = orders.some((order) => order.isNew)
     const visibleOrders = useMemo(() => orders, [orders])
     const highlightedOrder = visibleOrders.find((order) => order.id === highlightedOrderId) || null
+    const reviewedOrdersCount = isAdmin ? visibleOrders.filter((order) => order.isNew).length : 0
 
     useEffect(() => {
         if (isAdmin && hasUnreadOrders) {

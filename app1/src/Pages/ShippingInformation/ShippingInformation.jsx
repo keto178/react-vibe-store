@@ -1,15 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './ShippingInformation.css'
-import { getActiveSession } from '../../utils/auth'
 import { calculateOrderSummary } from '../../utils/orders'
 import { formatPrice } from '../../utils/currency'
 import { createShippingForm } from './shippingForm'
 import ShippingSummaryPanel from './components/ShippingSummaryPanel'
 
-export default function ShippingInformation({ cartItems = [], onPlaceOrder }) {
+export default function ShippingInformation({ activeSession, cartItems = [], onPlaceOrder }) {
     const navigate = useNavigate()
-    const activeSession = getActiveSession()
     const [form, setForm] = useState(() => createShippingForm(activeSession))
     const [status, setStatus] = useState({ type: '', text: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)

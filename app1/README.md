@@ -5,12 +5,15 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 ## What It Includes
 
 - JWT user registration and login
+- Active-session sync through `/api/auth/me` after login or page refresh
 - Seeded admin account with protected admin APIs
 - Product and category management APIs
 - Cart API backed by MongoDB
 - Checkout flow that stores shipping details and order snapshots
 - User order history and admin order management
 - Admin email notification support through Nodemailer
+- Local file-storage fallback for backend development when MongoDB is unavailable
+- Local auth fallback when the API server cannot be reached in the browser
 
 ## Frontend
 
@@ -109,12 +112,11 @@ Change those values in `server/.env` before running in a real environment.
 
 ## Verification
 
-The current codebase passes:
+The frontend codebase passes:
 
 - `npm run lint`
-- `npm run build`
 
-MongoDB was not listening on `127.0.0.1:27017` during verification, so the backend could not be started fully in this session.
+`npm run build` may fail in restricted Windows sandbox environments because Vite attempts an OS-level spawn while resolving paths. Re-run it in a normal local shell to verify the production build outside the sandbox if needed.
 
 ## Project Guide
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { clearActiveSession, getActiveSession } from '../../utils/auth'
+import { clearActiveSession } from '../../utils/auth'
 import { readFileAsDataUrl } from '../../utils/files'
 import { MAX_NICOTINE_LEVELS, sanitizeNicotineLevels } from '../../utils/nicotine'
 import {
@@ -11,6 +11,7 @@ import {
 } from './dashboardForms'
 
 export function useDashboardManager({
+    activeSession,
     categories = [],
     products = [],
     onAddCategory,
@@ -21,7 +22,7 @@ export function useDashboardManager({
     onDeleteProduct
 }) {
     const navigate = useNavigate()
-    const activeUser = getActiveSession()
+    const activeUser = activeSession
     const [categoryForm, setCategoryForm] = useState(() => createCategoryForm())
     const [productForm, setProductForm] = useState(() => createProductForm(categories))
     const [categoryStatus, setCategoryStatus] = useState({ type: '', text: '' })

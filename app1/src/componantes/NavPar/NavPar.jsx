@@ -4,12 +4,11 @@ import logo from "../../assets/img/ChatGPT Image Mar 22, 2026, 01_08_30 PM.png"
 import search_icon from '../../assets/img/search_icon.png'
 import basket_icon from '../../assets/img/basket_icon.png'
 import './NavPar.css'
-import { clearActiveSession, getActiveSession, isDashboardOwner } from '../../utils/auth'
+import { clearActiveSession, isDashboardOwner } from '../../utils/auth'
 
-export default function NavPar({ cartCount = 0, unreadOrdersCount = 0 }) {
+export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount = 0 }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const activeSession = getActiveSession()
     const canOpenDashboard = isDashboardOwner(activeSession)
     const currentPath = location.pathname.toLowerCase()
     const currentSearchTerm = new URLSearchParams(location.search).get('search') || ''

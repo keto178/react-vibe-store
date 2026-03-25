@@ -6,173 +6,137 @@ This file gives a short bilingual explanation for the main parts of the project.
 
 ## Root
 
-`package.json`
-- AR: يحتوي أوامر التشغيل والبناء والاعتمادات الأساسية للمشروع.
-- EN: Contains the project scripts, dependencies, and build commands.
+`README.md`
+- AR: دليل التشغيل السريع، بيئة العمل، وطريقة النشر على Vercel.
+- EN: Quick start guide, environment setup, and Vercel deployment notes.
+
+`PROJECT_STRUCTURE.md`
+- AR: ملخص لأهم الملفات والمجلدات داخل المشروع.
+- EN: Short guide to the main files and folders in the project.
 
 `vite.config.js`
-- AR: إعدادات Vite الخاصة بالتطوير والبناء.
-- EN: Vite configuration for development and production build behavior.
+- AR: إعدادات Vite للتطوير والبناء، ومنها توجيه `/api` إلى السيرفر المحلي.
+- EN: Vite configuration for development and build, including the local `/api` proxy.
 
-`README.md`
-- AR: المدخل السريع للمشروع وطريقة تشغيله والرجوع للتوثيق.
-- EN: Quick entry document for running the project and finding the docs.
-
-## Source
+## Frontend Source
 
 `src/main.jsx`
-- AR: نقطة بداية React؛ يقوم بتركيب `App` داخل `BrowserRouter`.
-- EN: React entry point; mounts `App` inside `BrowserRouter`.
+- AR: نقطة بداية React، ويقوم أيضًا بتنظيف البيانات القديمة من التخزين المحلي.
+- EN: React entry point, and it also cleans legacy local-storage data.
 
 `src/App.jsx`
-- AR: ملف التركيب الرئيسي الذي يربط شريط التنقل مع الـ routes.
-- EN: Main composition file that connects the navbar with the routes.
+- AR: يربط الـ navbar مع الـ routes ويزامن الجلسة المحفوظة مع `/api/auth/me` عند وجود توكن API.
+- EN: Connects the navbar with the routes and refreshes the saved session with `/api/auth/me` when an API token exists.
 
 `src/App.css` and `src/index.css`
-- AR: تنسيقات عامة على مستوى التطبيق.
-- EN: Global styles used across the application.
+- AR: التنسيقات العامة على مستوى التطبيق.
+- EN: Global application styles.
 
-## Hooks
+## Frontend Hooks
+
+`src/hooks/useActiveSession.js`
+- AR: hook تفاعلي يراقب الجلسة الحالية من `localStorage` ويحدّث الواجهة عند تسجيل الدخول أو الخروج.
+- EN: Reactive hook that watches the current session in `localStorage` and updates the UI on login/logout.
 
 `src/hooks/useAppStore.js`
-- AR: المخزن الرئيسي للحالة؛ يدير المنتجات، السلة، الأقسام، الطلبات، والحفظ في `localStorage`.
-- EN: Main state store; manages products, cart, categories, orders, and localStorage persistence.
+- AR: المخزن الرئيسي لحالة التطبيق؛ يدير المنتجات، الأقسام، السلة، والطلبات من خلال الـ API.
+- EN: Main application store; manages products, categories, cart, and orders through the API layer.
 
 ## Routes
 
 `src/routes/AppRoutes.jsx`
-- AR: يجمع كل مسارات التطبيق في ملف واحد.
-- EN: Centralizes all app routes in one file.
+- AR: يجمع كل مسارات التطبيق ويمرر الجلسة الحالية للمسارات المحمية.
+- EN: Centralizes app routes and passes the current session into protected routes.
 
 `src/routes/ProtectedRoute.jsx`
-- AR: يحمي صفحة لوحة التحكم ويمنع الوصول لغير المصرح لهم.
-- EN: Protects the dashboard page from unauthorized access.
+- AR: يحمي الصفحات التي تحتاج تسجيل دخول أو صلاحية admin.
+- EN: Guards pages that require authentication or admin access.
 
-## Components
-
-`src/componantes/NavPar/NavPar.jsx`
-- AR: شريط التنقل العلوي؛ يعرض الروابط والسلة والإشعارات وتسجيل الدخول أو الخروج.
-- EN: Top navigation bar; shows links, cart, notifications, and auth actions.
-
-`src/componantes/Header/Header.jsx`
-- AR: هيدر الصفحة الرئيسية مع ملخص بسيط عن المتجر.
-- EN: Home hero section with a quick store summary.
+## Auth UI
 
 `src/componantes/SingnUp/SingnUp.jsx`
-- AR: شاشة تسجيل الدخول وإنشاء الحساب باستخدام تخزين محلي.
-- EN: Login and signup screen using local storage.
+- AR: شاشة تسجيل الدخول وإنشاء الحساب، وتدعم API الأساسي مع fallback محلي عند تعذر الوصول للسيرفر.
+- EN: Login and signup screen, supporting the main API with a local fallback when the backend is unreachable.
 
-## Pages
+`src/utils/auth.js`
+- AR: وظائف حفظ الجلسة، قراءتها، مسحها، وإشعار الواجهة عند تغيرها.
+- EN: Helpers for saving, reading, clearing, and broadcasting session changes.
+
+`src/utils/api.js`
+- AR: طبقة طلبات HTTP لكل endpoints، مع فحص للاستجابات غير المتوقعة ومسار لجلب بيانات المستخدم الحالي.
+- EN: HTTP wrapper for all endpoints, with unexpected-response guards and a current-user fetch helper.
+
+`src/utils/localAuthFallback.js`
+- AR: تسجيل دخول/تسجيل حساب محلي عند غياب السيرفر أثناء التطوير.
+- EN: Local login/register fallback used when the backend is unavailable during development.
+
+## Main Pages
 
 `src/Pages/Home/Home.jsx`
-- AR: الصفحة الرئيسية؛ تعرض الأقسام والمنتجات مع إمكانية الفلترة حسب القسم.
-- EN: Home page; shows categories and products with category filtering.
-
-`src/Pages/Home/components/CategoryListSection.jsx`
-- AR: جزء مستقل لعرض قائمة أقسام واحدة.
-- EN: Small standalone block for rendering one category list.
-
-`src/Pages/Card/Card.jsx`
-- AR: بطاقة المنتج المشتركة بين الصفحة الرئيسية ولوحة التحكم، وتدعم اختيار اللون.
-- EN: Shared product card used in Home and Dashboard, with color selection support.
-
-`src/Pages/Dashboard/Dashboard.jsx`
-- AR: صفحة الإدارة، والآن تعمل كتركيب لمكونات أصغر بدل ملف ضخم واحد.
-- EN: Admin page, now acting as a composition of smaller components instead of one large file.
-
-`src/Pages/Dashboard/useDashboardManager.js`
-- AR: يحتوي منطق لوحة التحكم مثل النماذج، التعديل، الحذف، والألوان.
-- EN: Holds dashboard logic such as forms, editing, deleting, and color handling.
-
-`src/Pages/Dashboard/dashboardForms.js`
-- AR: يجمع القيم الأولية ومُحضّرات نماذج الأقسام والمنتجات.
-- EN: Stores initial values and form builders for category and product forms.
-
-`src/Pages/Dashboard/components/DashboardHeader.jsx`
-- AR: رأس لوحة التحكم والإحصائيات السريعة.
-- EN: Dashboard top area and quick stats.
-
-`src/Pages/Dashboard/components/CategorySection.jsx`
-- AR: قسم إدارة الأقسام.
-- EN: Category management section.
-
-`src/Pages/Dashboard/components/ProductSection.jsx`
-- AR: قسم إضافة وتعديل المنتجات.
-- EN: Product add/edit section.
-
-`src/Pages/Dashboard/components/ProductListSection.jsx`
-- AR: قائمة المنتجات الموجودة مع أزرار التعديل والحذف.
-- EN: Existing product list with edit and delete actions.
+- AR: الصفحة الرئيسية التي تعرض الأقسام والمنتجات والبحث والتصفية.
+- EN: Home page showing categories, products, search, and filtering.
 
 `src/Pages/PlecOurder/PlecOurder.jsx`
 - AR: صفحة السلة الحالية ومراجعة العناصر قبل الشحن.
 - EN: Current cart page for reviewing items before shipping.
 
-`src/Pages/PlecOurder/components/CartItemCard.jsx`
-- AR: بطاقة مستقلة لعنصر واحد داخل السلة.
-- EN: Standalone card for a single cart item.
-
 `src/Pages/ShippingInformation/ShippingInformation.jsx`
-- AR: صفحة بيانات الشحن وإرسال الطلب.
-- EN: Shipping details and order submission page.
-
-`src/Pages/ShippingInformation/shippingForm.js`
-- AR: القيم الافتراضية الخاصة بنموذج الشحن.
-- EN: Default values for the shipping form.
-
-`src/Pages/ShippingInformation/components/ShippingSummaryPanel.jsx`
-- AR: يعرض ملخص الطلب داخل صفحة الشحن.
-- EN: Displays the order summary inside the shipping page.
+- AR: نموذج الشحن مع ملخص الطلب، ويستخدم بيانات الجلسة الحالية لملء الاسم والبريد تلقائيًا.
+- EN: Shipping form with order summary, prefilled from the active session when available.
 
 `src/Pages/Orders/Orders.jsx`
-- AR: صفحة الطلبات للعميل أو للأدمن حسب المستخدم الحالي.
-- EN: Orders page for either the customer or the admin depending on the active user.
+- AR: صفحة الطلبات للمستخدم أو للإدارة، وتعرض حالة التحديث والطلبات الجديدة.
+- EN: Orders page for customers or admins, including status updates and new-order indicators.
 
-`src/Pages/Orders/components/OrderCard.jsx`
-- AR: بطاقة الطلب الكاملة، وتعرض العناصر، اللون المختار، والإجمالي، وزر `Done`.
-- EN: Full order card showing items, selected color, totals, and the `Done` button.
+`src/Pages/Dashboard/Dashboard.jsx`
+- AR: لوحة الإدارة لتعديل الأقسام والمنتجات.
+- EN: Admin dashboard for managing categories and products.
 
-`src/Pages/Orders/components/EmailStatus.jsx`
-- AR: يعرض حالة إرسال إشعار الإيميل الخاص بالطلب.
-- EN: Displays the email notification status for the order.
+`src/Pages/Dashboard/useDashboardManager.js`
+- AR: منطق لوحة الإدارة مثل النماذج، التعديل، الحذف، وإدارة الصور والألوان.
+- EN: Dashboard logic for forms, editing, deleting, image handling, and colors.
 
-## Utilities
+## Backend
 
-`src/utils/auth.js`
-- AR: وظائف المستخدمين والجلسات والصلاحيات.
-- EN: User, session, and permission helpers.
+`server/src/app.js`
+- AR: تطبيق Express الرئيسي الخاص بمسارات MongoDB.
+- EN: Main Express app for the MongoDB-backed API.
 
-`src/utils/products.js`
-- AR: تحميل وحفظ المنتجات مع توحيد بيانات الألوان.
-- EN: Loads and saves products while normalizing color data.
+`server/src/server.js`
+- AR: يشغّل السيرفر ويحوّل تلقائيًا إلى التخزين الملفي محليًا إذا لم يعمل MongoDB.
+- EN: Starts the server and falls back to file storage locally when MongoDB is unavailable.
 
-`src/utils/categories.js`
-- AR: تحميل وحفظ الأقسام مع توحيد نوع القسم.
-- EN: Loads and saves categories while normalizing the category group.
+`server/src/fileApp.js`
+- AR: نسخة API تعمل على التخزين الملفي المحلي، وتُستخدم كخطة بديلة أثناء التطوير.
+- EN: File-storage API used as a local fallback during development.
 
-`src/utils/cart.js`
-- AR: تحميل وحفظ عناصر السلة مع توحيد الكمية واللون.
-- EN: Loads and saves cart items while normalizing quantity and color.
+`server/src/controllers/`
+- AR: منطق المصادقة، السلة، الأقسام، المنتجات، والطلبات.
+- EN: Controllers for auth, cart, categories, products, and orders.
 
-`src/utils/orders.js`
-- AR: كل منطق الطلبات مثل الحسابات والتخزين والفلترة وتنسيق العنوان.
-- EN: Core order logic such as totals, storage, filtering, and address formatting.
+`server/src/models/`
+- AR: تعريفات Mongoose الخاصة بالمستخدمين والمنتجات والطلبات والسلة.
+- EN: Mongoose models for users, products, orders, and cart data.
 
-`src/utils/orderEmail.js`
-- AR: مسؤول عن إرسال إشعار الطلب إلى الإيميل باستخدام EmailJS.
-- EN: Responsible for sending order notification emails through EmailJS.
+`server/src/services/`
+- AR: خدمات مساعدة مثل البريد الإلكتروني، الـ seed الافتراضي، والتعامل مع التخزين الملفي.
+- EN: Support services such as email, default seeding, and file-store helpers.
 
-`src/utils/files.js`
-- AR: أداة مساعدة لتحويل ملفات الصور إلى `data URL`.
-- EN: Helper for converting image files into data URLs.
+## Data and Deployment
 
-## Assets
+`server/data/store.json`
+- AR: ملف التخزين المحلي المستخدم عند تشغيل وضع file storage.
+- EN: Local data file used when the app runs in file-storage mode.
 
-`src/assets` and `public`
-- AR: تحتوي الصور والأيقونات والملفات الثابتة المستخدمة في الواجهة.
-- EN: Contain images, icons, and static files used by the UI.
+`../api/[...path].js`
+- AR: دالة Vercel serverless التي تختار بين تطبيق MongoDB والنسخة الملفية حسب البيئة.
+- EN: Vercel serverless entry that chooses between the MongoDB app and the file-based fallback.
+
+`../vercel.json`
+- AR: إعدادات النشر التي تربط الـ frontend مع مخرجات البناء ومسار `/api`.
+- EN: Deployment config that connects the frontend output with the `/api` serverless route.
 
 ## Notes
 
-- AR: تم الحفاظ على أسماء بعض المجلدات كما هي مثل `componantes` و`PlecOurder` حتى لا نكسر الاستيرادات الحالية.
-- EN: Some existing folder names such as `componantes` and `PlecOurder` were kept as-is to avoid breaking current imports.
+- AR: تم الإبقاء على بعض الأسماء القديمة مثل `componantes` و`PlecOurder` حتى لا تنكسر الاستيرادات الحالية.
+- EN: Some legacy folder names such as `componantes` and `PlecOurder` were kept to avoid breaking existing imports.

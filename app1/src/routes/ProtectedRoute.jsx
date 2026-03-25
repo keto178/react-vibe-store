@@ -1,10 +1,8 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
-import { getActiveSession, isDashboardOwner } from '../utils/auth'
+import { isDashboardOwner } from '../utils/auth'
 
-export default function ProtectedRoute({ children, requireAdmin = false }) {
-    const activeSession = getActiveSession()
-
+export default function ProtectedRoute({ children, activeSession, requireAdmin = false }) {
     if (!activeSession) {
         return <Navigate to="/Login" replace />
     }
