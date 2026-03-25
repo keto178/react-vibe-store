@@ -5,7 +5,8 @@ const LEGACY_STORAGE_KEYS = [
     'app1_products',
     'app1_cart',
     'app1_categories',
-    'app1_orders'
+    'app1_orders',
+    'app1_local_fallback_users'
 ]
 
 function removeKeys(storageObject, keys) {
@@ -24,7 +25,7 @@ function cleanupLegacySession(storageObject) {
     try {
         const parsedSession = JSON.parse(savedSession)
 
-        if (!parsedSession?.token || !parsedSession?.email) {
+        if (!parsedSession?.token || !parsedSession?.email || parsedSession?.authMode === 'fallback') {
             storageObject.removeItem(SESSION_STORAGE_KEY)
         }
     } catch {

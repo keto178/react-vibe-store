@@ -55,8 +55,8 @@ This file gives a short bilingual explanation for the main parts of the project.
 ## Auth UI
 
 `src/componantes/SingnUp/SingnUp.jsx`
-- AR: شاشة تسجيل الدخول وإنشاء الحساب، وتدعم API الأساسي مع fallback محلي عند تعذر الوصول للسيرفر.
-- EN: Login and signup screen, supporting the main API with a local fallback when the backend is unreachable.
+- AR: شاشة تسجيل الدخول وإنشاء الحساب، وتعتمد على الـ API الأساسي فقط.
+- EN: Login and signup screen backed by the main API only.
 
 `src/utils/auth.js`
 - AR: وظائف حفظ الجلسة، قراءتها، مسحها، وإشعار الواجهة عند تغيرها.
@@ -65,10 +65,6 @@ This file gives a short bilingual explanation for the main parts of the project.
 `src/utils/api.js`
 - AR: طبقة طلبات HTTP لكل endpoints، مع فحص للاستجابات غير المتوقعة ومسار لجلب بيانات المستخدم الحالي.
 - EN: HTTP wrapper for all endpoints, with unexpected-response guards and a current-user fetch helper.
-
-`src/utils/localAuthFallback.js`
-- AR: تسجيل دخول/تسجيل حساب محلي عند غياب السيرفر أثناء التطوير.
-- EN: Local login/register fallback used when the backend is unavailable during development.
 
 ## Main Pages
 
@@ -104,11 +100,11 @@ This file gives a short bilingual explanation for the main parts of the project.
 
 `server/src/server.js`
 - AR: يشغّل السيرفر ويحوّل تلقائيًا إلى التخزين الملفي محليًا إذا لم يعمل MongoDB.
-- EN: Starts the server and falls back to file storage locally when MongoDB is unavailable.
+- EN: Starts the server and falls back to local file storage when MongoDB is unavailable.
 
 `server/src/fileApp.js`
-- AR: نسخة API تعمل على التخزين الملفي المحلي، وتُستخدم كخطة بديلة أثناء التطوير.
-- EN: File-storage API used as a local fallback during development.
+- AR: نسخة API تعمل على التخزين الملفي محليًا، أو على الذاكرة داخل بيئة Vercel serverless عند غياب MongoDB.
+- EN: Alternate API that uses local file storage in development and in-memory server storage on Vercel when MongoDB is unavailable.
 
 `server/src/controllers/`
 - AR: منطق المصادقة، السلة، الأقسام، المنتجات، والطلبات.
@@ -125,12 +121,12 @@ This file gives a short bilingual explanation for the main parts of the project.
 ## Data and Deployment
 
 `server/data/store.json`
-- AR: ملف التخزين المحلي المستخدم عند تشغيل وضع file storage.
-- EN: Local data file used when the app runs in file-storage mode.
+- AR: ملف التخزين المحلي المستخدم عند تشغيل وضع file storage على الجهاز المحلي.
+- EN: Local data file used by the file-storage mode in local development.
 
 `../api/[...path].js`
-- AR: دالة Vercel serverless التي تختار بين تطبيق MongoDB والنسخة الملفية حسب البيئة.
-- EN: Vercel serverless entry that chooses between the MongoDB app and the file-based fallback.
+- AR: دالة Vercel serverless التي تختار بين تطبيق MongoDB والنسخة البديلة على السيرفر حسب البيئة.
+- EN: Vercel serverless entry that chooses between the MongoDB app and the server-side fallback storage mode.
 
 `../vercel.json`
 - AR: إعدادات النشر التي تربط الـ frontend مع مخرجات البناء ومسار `/api`.

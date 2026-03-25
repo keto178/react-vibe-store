@@ -6,6 +6,8 @@ import { DEFAULT_CATEGORIES } from '../constants/defaultData.js'
 
 const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
 const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
+const MEMORY_STORE_KEY = '__APP1_SERVER_MEMORY_STORE__'
+const isServerlessDeployment = process.env.VERCEL === '1'
 
 const EMPTY_STORE = {
     users: [],
@@ -29,11 +31,31 @@ function normalizeStoreShape(store) {
     }
 }
 
+function cloneStore(store) {
+    return JSON.parse(JSON.stringify(normalizeStoreShape(store)))
+}
+
+function getMemoryStore() {
+    if (!globalThis[MEMORY_STORE_KEY]) {
+        globalThis[MEMORY_STORE_KEY] = cloneEmptyStore()
+    }
+
+    return globalThis[MEMORY_STORE_KEY]
+}
+
+export function getFileStorageMode() {
+    return isServerlessDeployment ? 'memory' : 'file'
+}
+
 export function createId(prefix = '') {
     return prefix ? `${prefix}-${randomUUID()}` : randomUUID()
 }
 
 export async function readStore() {
+    if (isServerlessDeployment) {
+        return cloneStore(getMemoryStore())
+    }
+
     await mkdir(DATA_DIRECTORY_URL, { recursive: true })
 
     try {
@@ -47,6 +69,11 @@ export async function readStore() {
 }
 
 export async function writeStore(store) {
+    if (isServerlessDeployment) {
+        globalThis[MEMORY_STORE_KEY] = cloneStore(store)
+        return
+    }
+
     await mkdir(DATA_DIRECTORY_URL, { recursive: true })
     await writeFile(DATA_FILE_URL, JSON.stringify(normalizeStoreShape(store), null, 2), 'utf8')
 }

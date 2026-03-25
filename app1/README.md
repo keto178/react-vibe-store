@@ -13,7 +13,7 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 - User order history and admin order management
 - Admin email notification support through Nodemailer
 - Local file-storage fallback for backend development when MongoDB is unavailable
-- Local auth fallback when the API server cannot be reached in the browser
+- In-memory server fallback on Vercel when MongoDB is unavailable
 
 ## Frontend
 

@@ -40,7 +40,7 @@ export function getActiveSession() {
     try {
         const parsedSession = JSON.parse(savedSession)
 
-        if (!parsedSession?.token || !parsedSession?.email) {
+        if (!parsedSession?.token || !parsedSession?.email || parsedSession?.authMode === 'fallback') {
             window.localStorage.removeItem(SESSION_STORAGE_KEY)
             return null
         }

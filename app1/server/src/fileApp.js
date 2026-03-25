@@ -6,6 +6,7 @@ import env from './config/env.js'
 import { sendAdminOrderEmail } from './services/emailService.js'
 import {
     createId,
+    getFileStorageMode,
     getCartForUser,
     prepareFileStore,
     readStore,
@@ -210,7 +211,7 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }))
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        storage: 'file'
+        storage: getFileStorageMode()
     })
 })
 

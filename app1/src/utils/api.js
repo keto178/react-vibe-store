@@ -1,9 +1,4 @@
 import { clearActiveSession, getAuthToken } from './auth'
-import {
-    isApiReachabilityError,
-    loginWithFallbackAuth,
-    registerWithFallbackAuth
-} from './localAuthFallback'
 
 function normalizeBaseUrl(url) {
     return url.replace(/\/$/, '')
@@ -88,7 +83,7 @@ async function apiRequest(path, options = {}) {
         })
     } catch {
         throw new Error(
-            'Cannot reach the API server. Make sure the backend is running on http://localhost:5000, the server/.env file exists, and MongoDB is started.'
+            'Cannot reach the API server. Check that the backend is running locally or that the Vercel /api function is deployed correctly.'
         )
     }
 
@@ -109,12 +104,6 @@ export function registerUserApi(payload) {
     return apiRequest('/auth/register', {
         method: 'POST',
         body: payload
-    }).catch((error) => {
-        if (!isApiReachabilityError(error)) {
-            throw error
-        }
-
-        return registerWithFallbackAuth(payload)
     })
 }
 
@@ -122,12 +111,6 @@ export function loginUserApi(payload) {
     return apiRequest('/auth/login', {
         method: 'POST',
         body: payload
-    }).catch((error) => {
-        if (!isApiReachabilityError(error)) {
-            throw error
-        }
-
-        return loginWithFallbackAuth(payload)
     })
 }
 

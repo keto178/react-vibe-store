@@ -13,9 +13,8 @@ async function resolveServerApp() {
         return app
     } catch (error) {
         if (isVercelDeployment) {
-            console.error('MongoDB connection failed inside the Vercel API function.')
+            console.error('MongoDB connection failed inside the Vercel API function. Falling back to in-memory server storage.')
             console.error(error)
-            throw error
         }
 
         await prepareFileApi()
