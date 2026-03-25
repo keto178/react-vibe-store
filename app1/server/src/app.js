@@ -1,0 +1,50 @@
+import cors from 'cors'
+import express from 'express'
+import env from './config/env.js'
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import authRoutes from './routes/authRoutes.js'
+import cartRoutes from './routes/cartRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
+import productRoutes from './routes/productRoutes.js'
+
+const app = express()
+
+function isAllowedDevOrigin(origin) {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+}
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || origin === env.clientOrigin) {
+            callback(null, true)
+            return
+        }
+
+        if (env.nodeEnv !== 'production' && isAllowedDevOrigin(origin)) {
+            callback(null, true)
+            return
+        }
+
+        callback(new Error(`Origin ${origin} is not allowed by CORS.`))
+    }
+}))
+app.use(express.json({ limit: '15mb' }))
+app.use(express.urlencoded({ extended: true, limit: '15mb' }))
+
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok'
+    })
+})
+
+app.use('/api/auth', authRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/cart', cartRoutes)
+app.use('/api/orders', orderRoutes)
+
+app.use(notFoundHandler)
+app.use(errorHandler)
+
+export default app
