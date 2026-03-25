@@ -81,7 +81,6 @@ export async function writeStore(store) {
 
 function sanitizeCategory(category) {
     return {
-        id: category.id,
         name: category.name,
         group: category.group || 'Device',
         image: category.image
@@ -144,11 +143,23 @@ export async function prepareFileStore() {
 
         if (!existingCategory) {
             store.categories.push({
-                id: createId('cat'),
                 ...sanitizeCategory(category),
+                id: createId('cat'),
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             })
+            hasChanges = true
+        } else if (!existingCategory.id) {
+            existingCategory.id = createId('cat')
+            existingCategory.updatedAt = new Date().toISOString()
+            hasChanges = true
+        }
+    }
+
+    for (const category of store.categories) {
+        if (!category.id) {
+            category.id = createId('cat')
+            category.updatedAt = new Date().toISOString()
             hasChanges = true
         }
     }
