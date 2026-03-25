@@ -9,6 +9,12 @@ const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
 const MEMORY_STORE_KEY = '__APP1_SERVER_MEMORY_STORE__'
 const isServerlessDeployment = process.env.VERCEL === '1'
 const DEFAULT_ADMIN_USER_ID = 'usr-admin-default'
+const DEFAULT_CATEGORY_ID_BY_KEY = new Map(
+    DEFAULT_CATEGORIES.map((category) => [
+        `${category.group || 'Device'}:${category.name}`,
+        category.id || ''
+    ])
+)
 
 const EMPTY_STORE = {
     users: [],
@@ -87,6 +93,10 @@ function sanitizeCategory(category) {
     }
 }
 
+function resolveDefaultCategoryId(name, group) {
+    return DEFAULT_CATEGORY_ID_BY_KEY.get(`${group || 'Device'}:${name}`) || ''
+}
+
 export function sanitizeUser(user) {
     return {
         id: user.id,
@@ -136,29 +146,21 @@ export async function prepareFileStore() {
         }
     }
 
-    for (const category of DEFAULT_CATEGORIES) {
-        const existingCategory = store.categories.find((item) => (
-            item.name === category.name && item.group === category.group
-        ))
-
-        if (!existingCategory) {
+    if (store.categories.length === 0) {
+        for (const category of DEFAULT_CATEGORIES) {
             store.categories.push({
                 ...sanitizeCategory(category),
-                id: createId('cat'),
+                id: category.id || createId('cat'),
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             })
-            hasChanges = true
-        } else if (!existingCategory.id) {
-            existingCategory.id = createId('cat')
-            existingCategory.updatedAt = new Date().toISOString()
             hasChanges = true
         }
     }
 
     for (const category of store.categories) {
         if (!category.id) {
-            category.id = createId('cat')
+            category.id = resolveDefaultCategoryId(category.name, category.group) || createId('cat')
             category.updatedAt = new Date().toISOString()
             hasChanges = true
         }

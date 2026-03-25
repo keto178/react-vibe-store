@@ -21,21 +21,25 @@ function buildSvgDataUri(label, background, foreground = '#ffffff') {
 
 export const DEFAULT_CATEGORIES = [
     {
+        id: 'cat-default-starter-kits',
         name: 'Starter Kits',
         group: 'Device',
         image: buildSvgDataUri('Starter Kits', '#0f766e')
     },
     {
+        id: 'cat-default-pod-systems',
         name: 'Pod Systems',
         group: 'Device',
         image: buildSvgDataUri('Pod Systems', '#1d4ed8')
     },
     {
+        id: 'cat-default-fruit-liquids',
         name: 'Fruit Liquids',
         group: 'Liquid',
         image: buildSvgDataUri('Fruit Liquids', '#f97316')
     },
     {
+        id: 'cat-default-menthol-liquids',
         name: 'Menthol Liquids',
         group: 'Liquid',
         image: buildSvgDataUri('Menthol Liquids', '#0ea5e9')

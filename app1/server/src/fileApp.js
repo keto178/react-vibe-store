@@ -102,6 +102,64 @@ function sanitizeNicotineLevels(levels, productType) {
         .slice(0, 2)
 }
 
+function resolveCategoryGroup(groupValue, typeValue) {
+    if (groupValue === 'Liquid' || typeValue === 'Liquid') {
+        return 'Liquid'
+    }
+
+    return 'Device'
+}
+
+function ensureCategoryForProductRequest(store, requestBody) {
+    const requestedCategoryId = typeof requestBody?.categoryId === 'string'
+        ? requestBody.categoryId.trim()
+        : ''
+    const requestedCategoryName = typeof requestBody?.category === 'string'
+        ? requestBody.category.trim()
+        : ''
+    const requestedCategoryGroup = resolveCategoryGroup(requestBody?.group, requestBody?.type)
+    const requestedCategoryImage = typeof requestBody?.categoryImage === 'string'
+        ? requestBody.categoryImage.trim()
+        : ''
+
+    if (requestedCategoryId) {
+        const existingById = store.categories.find((item) => item.id === requestedCategoryId)
+
+        if (existingById) {
+            return existingById
+        }
+    }
+
+    if (requestedCategoryName) {
+        const existingByName = store.categories.find((item) => (
+            item.name.trim().toLowerCase() === requestedCategoryName.toLowerCase() &&
+            (item.group || 'Device') === requestedCategoryGroup
+        ))
+
+        if (existingByName) {
+            return existingByName
+        }
+    }
+
+    if (!requestedCategoryId || !requestedCategoryName) {
+        return null
+    }
+
+    const now = new Date().toISOString()
+    const category = {
+        id: requestedCategoryId,
+        name: requestedCategoryName,
+        group: requestedCategoryGroup,
+        image: requestedCategoryImage,
+        createdAt: now,
+        updatedAt: now
+    }
+
+    store.categories.push(category)
+
+    return category
+}
+
 function normalizeOrder(order) {
     return {
         id: order.id,
@@ -461,7 +519,9 @@ app.delete('/api/categories/:categoryId', authenticate, requireAdmin, async (req
     const category = store.categories.find((item) => item.id === req.params.categoryId)
 
     if (!category) {
-        sendError(res, 404, 'Category not found.')
+        res.json({
+            message: 'Category was already removed.'
+        })
         return
     }
 
@@ -518,7 +578,7 @@ app.get('/api/products/:productId', async (req, res) => {
 
 app.post('/api/products', authenticate, requireAdmin, async (req, res) => {
     const store = await readStore()
-    const category = store.categories.find((item) => item.id === req.body.categoryId)
+    const category = ensureCategoryForProductRequest(store, req.body)
     const colors = Array.isArray(req.body.colors) && req.body.colors.length > 0
         ? req.body.colors
         : ['#5dc0ff']
@@ -570,7 +630,7 @@ app.post('/api/products', authenticate, requireAdmin, async (req, res) => {
 app.put('/api/products/:productId', authenticate, requireAdmin, async (req, res) => {
     const store = await readStore()
     const product = store.products.find((item) => item.id === req.params.productId)
-    const category = store.categories.find((item) => item.id === req.body.categoryId)
+    const category = ensureCategoryForProductRequest(store, req.body)
     const colors = Array.isArray(req.body.colors) && req.body.colors.length > 0
         ? req.body.colors
         : ['#5dc0ff']
@@ -644,7 +704,9 @@ app.delete('/api/products/:productId', authenticate, requireAdmin, async (req, r
     const product = store.products.find((item) => item.id === req.params.productId)
 
     if (!product) {
-        sendError(res, 404, 'Product not found.')
+        res.json({
+            message: 'Product was already removed.'
+        })
         return
     }
 
