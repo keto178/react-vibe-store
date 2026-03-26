@@ -23,52 +23,8 @@
     display: none;
 }
 
-.nav-brand-link,
-.nav-mobile-brand {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.brand-mark {
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #1d4f81 0%, #0f2842 100%);
-    color: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-}
-
-.brand-text {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1;
-}
-
-.brand-text strong {
-    color: #10273f;
-    font-size: 0.92rem;
-    letter-spacing: 0.08em;
-}
-
-.brand-text small {
-    margin-top: 3px;
-    color: #4e6780;
-    font-size: 0.56rem;
-    letter-spacing: 0.16em;
+.nav-mobile-center-spacer {
+    display: none;
 }
 
 .NavPar-container ul {
@@ -303,19 +259,10 @@
         gap: 10px;
     }
 
-    .nav-brand-mobile .brand-mark {
-        width: 28px;
-        height: 28px;
-        border-radius: 9px;
-        font-size: 0.62rem;
-    }
-
-    .nav-brand-mobile .brand-text strong {
-        font-size: min(0.9rem, 3.3vw);
-    }
-
-    .nav-brand-mobile .brand-text small {
-        font-size: min(0.54rem, 2.15vw);
+    .nav-mobile-center-spacer {
+        display: block;
+        flex: 1;
+        min-width: 8px;
     }
 
     .nav-mobile-actions {

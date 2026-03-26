@@ -18,14 +18,8 @@
     gap: 18px;
 }
 
-.site-footer-brand strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 0.95rem;
-    color: #ffffff;
-}
-
-.site-footer-brand p {
+.site-footer-note {
+    margin: 0;
     color: rgba(223, 241, 255, 0.88);
     font-size: 0.82rem;
     line-height: 1.45;

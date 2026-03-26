@@ -19,15 +19,6 @@ export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount
     const isSearchActive = isMobileSearchOpen || currentSearchTerm.length > 0
     const accountPath = activeSession ? '/Orders' : '/Login'
     const isAccountActive = isActivePath('/Orders', '/Login', '/Signup')
-    const Brand = ({ mobile = false }) => (
-        <span className={`nav-brand ${mobile ? 'nav-brand-mobile' : ''}`}>
-            <span className='brand-mark' aria-hidden="true">HV</span>
-            <span className='brand-text'>
-                <strong>HAMZA</strong>
-                <small>VAPE STORE</small>
-            </span>
-        </span>
-    )
 
     const handleLogout = () => {
         clearActiveSession()
@@ -94,9 +85,7 @@ export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount
                             </svg>
                         </button>
 
-                        <Link to="/Home" className='nav-mobile-brand' onClick={closeMobilePanels} aria-label="Hamza Vape Store">
-                            <Brand mobile />
-                        </Link>
+                        <div className='nav-mobile-center-spacer' aria-hidden="true" />
 
                         <div className='nav-mobile-actions'>
                             <button
@@ -191,10 +180,6 @@ export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount
                 </div>
 
                 <div className='nav-desktop-shell'>
-                    <Link to="/Home" className='nav-brand-link' aria-label="Hamza Vape Store">
-                        <Brand />
-                    </Link>
-
                     <ul className='open'>
                         <li className={isActivePath('/', '/Home') ? "active" : ""}><Link to="/Home">Home</Link></li>
                         <li className={isActivePath('/Orders') ? "active" : ""}><Link to="/Orders">Orders</Link></li>

@@ -6,10 +6,7 @@ export default function Footer({ activeSession }) {
     return (
         <footer className='site-footer'>
             <div className='site-footer-inner'>
-                <div className='site-footer-brand'>
-                    <strong>Hamza Vape Store</strong>
-                    <p>Mobile-ready shopping for vape devices and liquids.</p>
-                </div>
+                <p className='site-footer-note'>Mobile-ready shopping for vape devices and liquids.</p>
 
                 <nav className='site-footer-links' aria-label="Footer navigation">
                     <Link to="/Home">Home</Link>
@@ -21,7 +18,7 @@ export default function Footer({ activeSession }) {
                 </nav>
             </div>
 
-            <p className='site-footer-copy'>© {new Date().getFullYear()} Hamza Vape Store</p>
+            <p className='site-footer-copy'>&copy; {new Date().getFullYear()} All rights reserved.</p>
         </footer>
     )
 }
