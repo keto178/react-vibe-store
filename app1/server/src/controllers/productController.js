@@ -5,6 +5,11 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import { serializeProduct } from '../utils/serializers.js'
 
 const ALLOWED_NICOTINE_LEVELS = [9, 12, 30, 50]
+const CATALOG_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300'
+
+function applyCatalogCacheHeaders(res) {
+    res.set('Cache-Control', CATALOG_CACHE_CONTROL)
+}
 
 async function loadProduct(productId) {
     return Product.findById(productId).populate('category')
@@ -54,6 +59,8 @@ export const getProducts = asyncHandler(async (req, res) => {
         ))
         : filteredProducts
 
+    applyCatalogCacheHeaders(res)
+
     res.json({
         products: searchedProducts.map(serializeProduct)
     })
@@ -66,6 +73,8 @@ export const getProductById = asyncHandler(async (req, res) => {
         res.status(404)
         throw new Error('Product not found.')
     }
+
+    applyCatalogCacheHeaders(res)
 
     res.json({
         product: serializeProduct(product)

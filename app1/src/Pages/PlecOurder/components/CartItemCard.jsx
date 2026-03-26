@@ -8,7 +8,13 @@ export default function CartItemCard({ item, onUpdateCartQuantity, onRemoveFromC
 
     return (
         <article className='cart-item-card'>
-            <img className='cart-item-image' src={item.image} alt={item.name} />
+            <img
+                className='cart-item-image'
+                src={item.image}
+                alt={item.name}
+                loading="lazy"
+                decoding="async"
+            />
             <div className='cart-item-content'>
                 <div className='cart-item-top'>
                     <div>

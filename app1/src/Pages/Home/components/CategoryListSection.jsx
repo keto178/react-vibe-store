@@ -21,7 +21,13 @@ export default function CategoryListSection({ title, subtitle, categories = [], 
                             onClick={() => onSelectCategory(category)}
                         >
                             <div className='home-category-image-wrap'>
-                                <img src={category.image} alt={category.name} className='home-category-image' />
+                                <img
+                                    src={category.image}
+                                    alt={category.name}
+                                    className='home-category-image'
+                                    loading="lazy"
+                                    decoding="async"
+                                />
                             </div>
                             <strong>{category.name}</strong>
                         </button>

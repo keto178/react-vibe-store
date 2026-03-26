@@ -19,6 +19,16 @@ async function loadOrders(query = {}) {
     return orders.map(serializeOrder)
 }
 
+async function persistEmailStatus(orderId, emailNotification) {
+    try {
+        await Order.findByIdAndUpdate(orderId, {
+            emailNotification
+        })
+    } catch {
+        // Intentionally swallow background update failures to avoid breaking the checkout response.
+    }
+}
+
 export const checkout = asyncHandler(async (req, res) => {
     const requiredFields = [
         'fullName',
@@ -97,10 +107,23 @@ export const checkout = asyncHandler(async (req, res) => {
         isUnread: true
     })
 
+    const emailPromise = sendAdminOrderEmail(serializeOrder(order))
+    const emailTimeoutMs = 1200
+    const emailPendingNotification = {
+        status: 'pending',
+        message: 'Email notification is being sent in the background.'
+    }
     let emailNotification
 
     try {
-        emailNotification = await sendAdminOrderEmail(serializeOrder(order))
+        emailNotification = await Promise.race([
+            emailPromise,
+            new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(emailPendingNotification)
+                }, emailTimeoutMs)
+            })
+        ])
     } catch (error) {
         emailNotification = {
             status: 'failed',
@@ -108,11 +131,28 @@ export const checkout = asyncHandler(async (req, res) => {
         }
     }
 
-    order.emailNotification = emailNotification
-    await order.save()
+    const shouldUpdateEmailStatusInBackground = emailNotification === emailPendingNotification
 
+    order.emailNotification = emailNotification
     cart.items = []
-    await cart.save()
+
+    await Promise.all([
+        order.save(),
+        cart.save()
+    ])
+
+    if (shouldUpdateEmailStatusInBackground) {
+        emailPromise
+            .then((resolvedNotification) => {
+                persistEmailStatus(order._id, resolvedNotification)
+            })
+            .catch((error) => {
+                persistEmailStatus(order._id, {
+                    status: 'failed',
+                    message: error.message
+                })
+            })
+    }
 
     res.status(201).json({
         message: 'Order placed successfully.',

@@ -108,7 +108,12 @@ export default function OrderCard({ order = {}, highlightedOrderId, isAdmin, onU
             <div className='order-items-list'>
                 {items.map((item) => (
                     <div key={item.id} className='order-item-row'>
-                        <img src={item.image} alt={item.name} />
+                        <img
+                            src={item.image}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                        />
                         <div className='order-item-copy'>
                             <strong>{item.name}</strong>
                             <span>{item.category} - {item.type}</span>

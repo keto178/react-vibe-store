@@ -5,7 +5,6 @@ import User from '../models/User.js'
 export async function seedDefaults() {
     const normalizedAdminEmail = env.adminEmail.trim().toLowerCase()
     const normalizedAdminUsername = env.adminUsername.trim().toLowerCase()
-    const passwordHash = await bcrypt.hash(env.adminPassword, 10)
     const existingAdmin = await User.findOne({
         $or: [
             { email: normalizedAdminEmail },
@@ -14,6 +13,8 @@ export async function seedDefaults() {
     })
 
     if (!existingAdmin) {
+        const passwordHash = await bcrypt.hash(env.adminPassword, 10)
+
         await User.create({
             username: normalizedAdminUsername,
             email: normalizedAdminEmail,
@@ -21,10 +22,25 @@ export async function seedDefaults() {
             role: 'admin'
         })
     } else {
+        const passwordMatches = await bcrypt.compare(env.adminPassword, existingAdmin.passwordHash)
+        const hasIdentityChanges = (
+            existingAdmin.username !== normalizedAdminUsername ||
+            existingAdmin.email !== normalizedAdminEmail ||
+            existingAdmin.role !== 'admin'
+        )
+
+        if (!hasIdentityChanges && passwordMatches) {
+            return
+        }
+
+        if (!passwordMatches) {
+            existingAdmin.passwordHash = await bcrypt.hash(env.adminPassword, 10)
+        }
+
         existingAdmin.username = normalizedAdminUsername
         existingAdmin.email = normalizedAdminEmail
-        existingAdmin.passwordHash = passwordHash
         existingAdmin.role = 'admin'
+
         await existingAdmin.save()
     }
 }

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import './Header.css'
 
 const SMOKE_LAYERS = [
@@ -12,6 +12,40 @@ const SMOKE_LAYERS = [
 export default function Header({ productsCount, categoriesCount, hasProducts, onBrowseProducts }) {
     const headerRef = useRef(null)
     const smokeRefs = useRef([])
+    const pointerFrameRef = useRef(0)
+    const pendingPointerRef = useRef(null)
+    const supportsFinePointerRef = useRef(false)
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) {
+            supportsFinePointerRef.current = false
+            return undefined
+        }
+
+        const mediaQuery = window.matchMedia('(pointer: fine)')
+        const updatePointerSupport = () => {
+            supportsFinePointerRef.current = mediaQuery.matches
+        }
+
+        updatePointerSupport()
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', updatePointerSupport)
+            return () => mediaQuery.removeEventListener('change', updatePointerSupport)
+        }
+
+        mediaQuery.addListener(updatePointerSupport)
+        return () => mediaQuery.removeListener(updatePointerSupport)
+    }, [])
+
+    useEffect(() => {
+        return () => {
+            if (pointerFrameRef.current) {
+                window.cancelAnimationFrame(pointerFrameRef.current)
+                pointerFrameRef.current = 0
+            }
+        }
+    }, [])
 
     const updateSmokeOffsets = (clientX, clientY) => {
         const headerElement = headerRef.current
@@ -45,6 +79,22 @@ export default function Header({ productsCount, categoriesCount, hasProducts, on
         })
     }
 
+    const applyPointerMove = (clientX, clientY) => {
+        const headerElement = headerRef.current
+
+        if (!headerElement) {
+            return
+        }
+
+        const bounds = headerElement.getBoundingClientRect()
+        const relativeX = ((clientX - bounds.left) / bounds.width) - 0.5
+        const relativeY = ((clientY - bounds.top) / bounds.height) - 0.5
+
+        headerElement.style.setProperty('--pointer-x', relativeX.toFixed(4))
+        headerElement.style.setProperty('--pointer-y', relativeY.toFixed(4))
+        updateSmokeOffsets(clientX, clientY)
+    }
+
     const resetSmokeOffsets = () => {
         smokeRefs.current.forEach((smokeElement) => {
             if (!smokeElement) {
@@ -57,19 +107,28 @@ export default function Header({ productsCount, categoriesCount, hasProducts, on
     }
 
     const handlePointerMove = (event) => {
-        const headerElement = headerRef.current
-
-        if (!headerElement) {
+        if (!supportsFinePointerRef.current) {
             return
         }
 
-        const bounds = headerElement.getBoundingClientRect()
-        const relativeX = ((event.clientX - bounds.left) / bounds.width) - 0.5
-        const relativeY = ((event.clientY - bounds.top) / bounds.height) - 0.5
+        pendingPointerRef.current = {
+            clientX: event.clientX,
+            clientY: event.clientY
+        }
 
-        headerElement.style.setProperty('--pointer-x', relativeX.toFixed(4))
-        headerElement.style.setProperty('--pointer-y', relativeY.toFixed(4))
-        updateSmokeOffsets(event.clientX, event.clientY)
+        if (pointerFrameRef.current) {
+            return
+        }
+
+        pointerFrameRef.current = window.requestAnimationFrame(() => {
+            pointerFrameRef.current = 0
+
+            if (!pendingPointerRef.current) {
+                return
+            }
+
+            applyPointerMove(pendingPointerRef.current.clientX, pendingPointerRef.current.clientY)
+        })
     }
 
     const resetPointer = () => {
@@ -78,6 +137,13 @@ export default function Header({ productsCount, categoriesCount, hasProducts, on
         if (!headerElement) {
             return
         }
+
+        if (pointerFrameRef.current) {
+            window.cancelAnimationFrame(pointerFrameRef.current)
+            pointerFrameRef.current = 0
+        }
+
+        pendingPointerRef.current = null
 
         headerElement.style.setProperty('--pointer-x', '0')
         headerElement.style.setProperty('--pointer-y', '0')

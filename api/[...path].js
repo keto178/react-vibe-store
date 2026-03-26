@@ -1,5 +1,6 @@
 let selectedAppPromise = null
-let modulesPromise = null
+let coreModulesPromise = null
+let fallbackModulesPromise = null
 let hasLoggedStartupDiagnostics = false
 
 const isVercelDeployment = process.env.VERCEL === '1'
@@ -12,29 +13,42 @@ function buildRequestMeta(req) {
     }
 }
 
-async function loadServerModules() {
-    if (!modulesPromise) {
-        modulesPromise = Promise.all([
+async function loadCoreServerModules() {
+    if (!coreModulesPromise) {
+        coreModulesPromise = Promise.all([
             import('../app1/server/src/app.js'),
             import('../app1/server/src/config/db.js'),
             import('../app1/server/src/config/env.js'),
-            import('../app1/server/src/fileApp.js'),
             import('../app1/server/src/services/seedService.js')
-        ]).then(([appModule, dbModule, envModule, fileAppModule, seedModule]) => ({
+        ]).then(([appModule, dbModule, envModule, seedModule]) => ({
             app: appModule.default,
             connectToDatabase: dbModule.connectToDatabase,
             getDatabaseDebugState: dbModule.getDatabaseDebugState,
             getConfigDiagnostics: envModule.getConfigDiagnostics,
-            fileApp: fileAppModule.default,
-            prepareFileApi: fileAppModule.prepareFileApi,
             seedDefaults: seedModule.seedDefaults
         })).catch((error) => {
-            modulesPromise = null
+            coreModulesPromise = null
             throw error
         })
     }
 
-    return modulesPromise
+    return coreModulesPromise
+}
+
+async function loadFallbackModules() {
+    if (!fallbackModulesPromise) {
+        fallbackModulesPromise = import('../app1/server/src/fileApp.js')
+            .then((fallbackModule) => ({
+                fileApp: fallbackModule.default,
+                prepareFileApi: fallbackModule.prepareFileApi
+            }))
+            .catch((error) => {
+                fallbackModulesPromise = null
+                throw error
+            })
+    }
+
+    return fallbackModulesPromise
 }
 
 function logStartupDiagnostics(diagnostics) {
@@ -62,10 +76,8 @@ async function resolveServerApp() {
         connectToDatabase,
         getDatabaseDebugState,
         getConfigDiagnostics,
-        fileApp,
-        prepareFileApi,
         seedDefaults
-    } = await loadServerModules()
+    } = await loadCoreServerModules()
 
     logStartupDiagnostics(getConfigDiagnostics())
 
@@ -85,6 +97,11 @@ async function resolveServerApp() {
         })
 
         try {
+            const {
+                fileApp,
+                prepareFileApi
+            } = await loadFallbackModules()
+
             await prepareFileApi()
             console.warn('[api/startup] Using fallback in-memory API app.')
             return fileApp

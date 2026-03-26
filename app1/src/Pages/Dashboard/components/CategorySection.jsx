@@ -94,7 +94,13 @@ export default function CategorySection({
                     {categories.map((category) => (
                         <div key={category.id} className='dashboard-category-card'>
                             <div className='dashboard-category-image-wrap'>
-                                <img src={category.image} alt={category.name} className='dashboard-category-image' />
+                                <img
+                                    src={category.image}
+                                    alt={category.name}
+                                    className='dashboard-category-image'
+                                    loading="lazy"
+                                    decoding="async"
+                                />
                             </div>
                             <strong>{category.name}</strong>
                             <span className='dashboard-category-group'>{category.group}</span>

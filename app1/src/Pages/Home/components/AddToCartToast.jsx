@@ -11,7 +11,7 @@ export default function AddToCartToast({ toast, onClose }) {
     return (
         <div className='add-cart-toast' role='status' aria-live='polite'>
             <div className='add-cart-toast-media'>
-                <img src={product.image} alt={product.name} />
+                <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
             </div>
 
             <div className='add-cart-toast-body'>

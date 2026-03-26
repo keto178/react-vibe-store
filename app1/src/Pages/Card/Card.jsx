@@ -52,7 +52,13 @@ export default function Card({ product, showAddButton = true, footerActions = nu
     return (
         <article className='product-card'>
             <div className='product-card-image-wrap'>
-                <img className='product-card-image' src={product.image} alt={product.name} />
+                <img
+                    className='product-card-image'
+                    src={product.image}
+                    alt={product.name}
+                    loading="lazy"
+                    decoding="async"
+                />
                 <span className='product-card-category'>{product.category}</span>
             </div>
 

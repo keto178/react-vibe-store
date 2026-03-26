@@ -22,7 +22,12 @@ export default function ShippingSummaryPanel({ cartItems = [], summary = EMPTY_S
 
                     return (
                         <article key={item.id} className='shipping-item'>
-                            <img src={item.image} alt={item.name} />
+                            <img
+                                src={item.image}
+                                alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                            />
                             <div>
                                 <strong>{item.name}</strong>
                                 <p>{item.quantity} x {formatPrice(finalPrice)}</p>

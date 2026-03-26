@@ -77,9 +77,19 @@ export function useAppStore(activeSession) {
 
         async function loadStore() {
             try {
-                const [categoriesResponse, productsResponse] = await Promise.all([
+                const catalogPromise = Promise.all([
                     fetchCategoriesApi(),
                     fetchProductsApi()
+                ])
+                const sessionDataPromise = (!isFallbackSession && hasSession)
+                    ? Promise.all([
+                        fetchCartApi(),
+                        sessionRole === 'admin' ? fetchAdminOrdersApi() : fetchUserOrdersApi()
+                    ])
+                    : Promise.resolve([null, null])
+                const [[categoriesResponse, productsResponse], [cartResponse, ordersResponse]] = await Promise.all([
+                    catalogPromise,
+                    sessionDataPromise
                 ])
 
                 if (isCancelled) {
@@ -98,15 +108,6 @@ export function useAppStore(activeSession) {
                 if (!hasSession) {
                     setCartItems([])
                     setOrders([])
-                    return
-                }
-
-                const [cartResponse, ordersResponse] = await Promise.all([
-                    fetchCartApi(),
-                    sessionRole === 'admin' ? fetchAdminOrdersApi() : fetchUserOrdersApi()
-                ])
-
-                if (isCancelled) {
                     return
                 }
 
