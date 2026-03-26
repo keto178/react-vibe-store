@@ -13,6 +13,23 @@ function buildRequestMeta(req) {
     }
 }
 
+function applyCachePolicy(req, res) {
+    const requestPath = String(req.url || '').split('?')[0]
+    const isCatalogRequest = req.method === 'GET' && (
+        requestPath === '/api/products' ||
+        requestPath === '/api/categories' ||
+        requestPath.startsWith('/api/products/') ||
+        requestPath.startsWith('/api/categories/')
+    )
+
+    if (isCatalogRequest) {
+        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+        return
+    }
+
+    res.setHeader('Cache-Control', 'no-store')
+}
+
 async function loadCoreServerModules() {
     if (!coreModulesPromise) {
         coreModulesPromise = Promise.all([
@@ -128,6 +145,8 @@ async function getSelectedApp() {
 
 export default async function handler(req, res) {
     try {
+        applyCachePolicy(req, res)
+
         const selectedApp = await getSelectedApp()
         return selectedApp(req, res)
     } catch (error) {
