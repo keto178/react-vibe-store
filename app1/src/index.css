@@ -5,12 +5,19 @@
 }
 body{
     font-family: 'Poppins', sans-serif;
+    background: #eef3f8;
 }
 a{
     text-decoration: none;
     color: black;
 }
 .App{
-    width: 95%;
+    width: min(1240px, 95%);
     margin: 0 auto;
+}
+
+@media (max-width: 980px) {
+    .App {
+        width: 100%;
+    }
 }

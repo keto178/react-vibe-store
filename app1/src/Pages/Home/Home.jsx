@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import './Home.css'
 import Header from '../../componantes/Header/Header'
@@ -9,9 +9,12 @@ import AddToCartToast from './components/AddToCartToast'
 export default function Home({ categories = [], products = [], onAddToCart }) {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
+    const categorySectionRef = useRef(null)
     const productsSectionRef = useRef(null)
     const [selectedCategoryId, setSelectedCategoryId] = useState(null)
     const [cartToast, setCartToast] = useState(null)
+    const [mobileSortOrder, setMobileSortOrder] = useState('featured')
+    const [mobileViewMode, setMobileViewMode] = useState('grid')
     const categoriesCount = categories.length
     const activeSearchTerm = searchParams.get('search')?.trim() || ''
     const normalizedSearchTerm = activeSearchTerm.toLowerCase()
@@ -38,8 +41,26 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
         ].some((value) => String(value || '').toLowerCase().includes(normalizedSearchTerm))
     })
 
+    const sortedProducts = useMemo(() => {
+        const nextProducts = [...filteredProducts]
+
+        if (mobileSortOrder === 'price-low-high') {
+            nextProducts.sort((leftProduct, rightProduct) => Number(leftProduct.price || 0) - Number(rightProduct.price || 0))
+        } else if (mobileSortOrder === 'price-high-low') {
+            nextProducts.sort((leftProduct, rightProduct) => Number(rightProduct.price || 0) - Number(leftProduct.price || 0))
+        } else if (mobileSortOrder === 'name-a-z') {
+            nextProducts.sort((leftProduct, rightProduct) => String(leftProduct.name || '').localeCompare(String(rightProduct.name || '')))
+        }
+
+        return nextProducts
+    }, [filteredProducts, mobileSortOrder])
+
     const scrollToProducts = () => {
         productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    const scrollToCategories = () => {
+        categorySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     const handleSelectCategory = (category) => {
@@ -112,7 +133,7 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
                 hasProducts={products.length > 0}
                 onBrowseProducts={scrollToProducts}
             />
-            <section className='home-categories-wrapper'>
+            <section ref={categorySectionRef} className='home-categories-wrapper'>
                 <CategoryListSection
                     title='Device Categories'
                     subtitle='Device list'
@@ -150,7 +171,7 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
                         </p>
                     </div>
                     <div className='products-heading-actions'>
-                        <span className='products-count'>{filteredProducts.length} products</span>
+                        <span className='products-count'>{sortedProducts.length} products</span>
                         {hasSearchTerm && (
                             <span className='products-search-tag'>Search: {activeSearchTerm}</span>
                         )}
@@ -167,9 +188,53 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
                     </div>
                 </div>
 
-                {filteredProducts.length > 0 ? (
-                    <div className='products-grid'>
-                        {filteredProducts.map((product) => (
+                <div className='products-mobile-toolbar' aria-label='Products controls'>
+                    <button type="button" className='mobile-toolbar-filter' onClick={scrollToCategories}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10 18H14V16H10V18ZM3 6V8H21V6H3ZM6 13H18V11H6V13Z" />
+                        </svg>
+                        <span>Filter</span>
+                    </button>
+
+                    <div className='mobile-view-toggle' role="group" aria-label="Change products view">
+                        <button
+                            type="button"
+                            className={`mobile-view-option ${mobileViewMode === 'grid' ? 'active' : ''}`}
+                            onClick={() => setMobileViewMode('grid')}
+                            aria-label="Grid view"
+                            title="Grid view"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            className={`mobile-view-option ${mobileViewMode === 'compact' ? 'active' : ''}`}
+                            onClick={() => setMobileViewMode('compact')}
+                            aria-label="List view"
+                            title="List view"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 6H7V10H3V6ZM9 6H21V10H9V6ZM3 14H7V18H3V14ZM9 14H21V18H9V14Z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <label className='mobile-sort-group'>
+                        <span>Sort</span>
+                        <select value={mobileSortOrder} onChange={(event) => setMobileSortOrder(event.target.value)}>
+                            <option value="featured">Featured</option>
+                            <option value="price-low-high">Price Low</option>
+                            <option value="price-high-low">Price High</option>
+                            <option value="name-a-z">Name A-Z</option>
+                        </select>
+                    </label>
+                </div>
+
+                {sortedProducts.length > 0 ? (
+                    <div className={`products-grid ${mobileViewMode === 'compact' ? 'products-grid-compact' : ''}`}>
+                        {sortedProducts.map((product) => (
                             <Card key={product.id} product={product} onAddToCart={handleAddToCartFromHome} />
                         ))}
                     </div>

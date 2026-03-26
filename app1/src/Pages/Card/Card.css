@@ -298,29 +298,152 @@
     box-shadow: 0 10px 20px rgba(34, 197, 94, 0.18);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 980px) {
+    .product-card {
+        border-radius: 14px;
+        background: #ffffff;
+        border-color: #dbe5ef;
+        box-shadow: 0 8px 18px rgba(14, 30, 49, 0.08);
+    }
+
+    .product-card:hover {
+        transform: none;
+        box-shadow: 0 8px 18px rgba(14, 30, 49, 0.08);
+    }
+
     .product-card-image-wrap {
-        height: 156px;
+        height: 132px;
+    }
+
+    .product-card-category {
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 0.58rem;
+        letter-spacing: 0.1em;
     }
 
     .product-card-content {
-        padding: 13px;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .product-card-top h3 {
+        margin-bottom: 4px;
+        font-size: 0.88rem;
+        line-height: 1.25;
+    }
+
+    .product-card-top p {
+        font-size: 0.74rem;
+        -webkit-line-clamp: 1;
+        min-height: 1.4em;
+    }
+
+    .product-card-rating {
+        margin-bottom: 4px;
+        gap: 4px;
+    }
+
+    .product-card-stars {
+        font-size: 0.7rem;
+    }
+
+    .product-card-rating strong {
+        font-size: 0.7rem;
+    }
+
+    .product-card-chip {
+        font-size: 0.62rem;
+        padding: 4px 8px;
+    }
+
+    .product-card-colors,
+    .product-card-nicotine {
+        padding: 8px 9px;
+        border-radius: 12px;
+    }
+
+    .product-card-colors-label,
+    .product-card-nicotine-label {
+        font-size: 0.6rem;
+    }
+
+    .product-card-color-option {
+        width: 24px;
+        height: 24px;
+    }
+
+    .product-card-nicotine-chip {
+        font-size: 0.62rem;
+        padding: 4px 8px;
     }
 
     .product-card-footer {
         flex-direction: column;
         align-items: stretch;
+        gap: 8px;
+        padding-top: 8px;
     }
 
-    .product-card-colors {
-        align-items: flex-start;
+    .product-card-price-block span {
+        font-size: 0.58rem;
     }
 
-    .product-card-nicotine {
-        align-items: flex-start;
+    .product-card-price-current {
+        font-size: 0.94rem;
+    }
+
+    .product-card-price-old {
+        font-size: 0.72rem;
     }
 
     .product-card-button {
         width: 100%;
+        height: 34px;
+        font-size: 0.72rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2a64f6 0%, #1d4fd8 100%);
+        box-shadow: none;
+    }
+
+    .products-grid-compact .product-card {
+        display: grid;
+        grid-template-columns: minmax(118px, 148px) minmax(0, 1fr);
+        min-height: 168px;
+    }
+
+    .products-grid-compact .product-card-image-wrap {
+        height: 100%;
+    }
+
+    .products-grid-compact .product-card-content {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 520px) {
+    .product-card-meta,
+    .product-card-nicotine {
+        display: none;
+    }
+
+    .product-card-colors {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .product-card-colors-list {
+        gap: 4px;
+    }
+
+    .product-card-color-option {
+        width: 21px;
+        height: 21px;
+    }
+
+    .product-card-color-option .product-color-swatch {
+        width: 10px;
+        height: 10px;
     }
 }

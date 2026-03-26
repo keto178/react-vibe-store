@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import './App.css'
 import Navpar from './componantes/NavPar/NavPar'
+import Footer from './componantes/Footer/Footer'
 import { saveActiveSession } from './utils/auth'
 import AppRoutes from './routes/AppRoutes'
 import { useAppStore } from './hooks/useAppStore'
@@ -102,6 +103,7 @@ function App() {
           onDeleteProduct={handleDeleteProduct}
         />
       </main>
+      <Footer activeSession={activeSession} />
     </div>
   )
 }

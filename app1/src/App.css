@@ -20,3 +20,9 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+@media (max-width: 980px) {
+    .app-content {
+        padding-bottom: 72px;
+    }
+}
