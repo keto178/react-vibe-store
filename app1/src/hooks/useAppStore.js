@@ -20,6 +20,14 @@ import {
     updateOrderStatusApi,
     updateProductApi
 } from '../utils/api'
+import {
+    addGuestCartItem,
+    clearGuestCartItems,
+    readGuestCartItems,
+    removeGuestCartItem,
+    saveGuestCartItems,
+    updateGuestCartItemQuantity
+} from '../utils/guestCart'
 
 function ensureArray(value) {
     return Array.isArray(value) ? value : []
@@ -64,6 +72,11 @@ export function useAppStore(activeSession) {
 
     const refreshCart = async () => {
         if (!activeSession) {
+            setCartItems(readGuestCartItems())
+            return
+        }
+
+        if (isFallbackSession) {
             setCartItems([])
             return
         }
@@ -81,7 +94,36 @@ export function useAppStore(activeSession) {
                     fetchCategoriesApi(),
                     fetchProductsApi()
                 ])
-                const sessionDataPromise = (!isFallbackSession && hasSession)
+                const shouldLoadSessionData = !isFallbackSession && hasSession
+
+                if (shouldLoadSessionData) {
+                    const guestCartItems = readGuestCartItems()
+
+                    if (guestCartItems.length > 0) {
+                        const failedItems = []
+
+                        for (const item of guestCartItems) {
+                            try {
+                                await addCartItemApi({
+                                    productId: item.productId,
+                                    quantity: item.quantity,
+                                    selectedColor: item.selectedColor
+                                })
+                            } catch (error) {
+                                failedItems.push(item)
+                                logStoreError(error)
+                            }
+                        }
+
+                        if (failedItems.length > 0) {
+                            saveGuestCartItems(failedItems)
+                        } else {
+                            clearGuestCartItems()
+                        }
+                    }
+                }
+
+                const sessionDataPromise = shouldLoadSessionData
                     ? Promise.all([
                         fetchCartApi(),
                         sessionRole === 'admin' ? fetchAdminOrdersApi() : fetchUserOrdersApi()
@@ -106,7 +148,7 @@ export function useAppStore(activeSession) {
                 }
 
                 if (!hasSession) {
-                    setCartItems([])
+                    setCartItems(readGuestCartItems())
                     setOrders([])
                     return
                 }
@@ -118,10 +160,10 @@ export function useAppStore(activeSession) {
                     return
                 }
 
-                setCategories([])
-                setProducts([])
-                setCartItems([])
-                setOrders([])
+                if (!hasSession) {
+                    setCartItems(readGuestCartItems())
+                    setOrders([])
+                }
 
                 logStoreError(error)
             }
@@ -225,10 +267,15 @@ export function useAppStore(activeSession) {
 
     const handleAddToCart = async (product, selectedColor) => {
         if (!activeSession) {
+            const nextGuestCartItems = saveGuestCartItems(
+                addGuestCartItem(cartItems, product, selectedColor)
+            )
+
+            setCartItems(nextGuestCartItems)
+
             return {
-                ok: false,
-                requiresAuth: true,
-                message: 'Please log in to add products to your cart.'
+                ok: true,
+                mode: 'guest'
             }
         }
 
@@ -261,6 +308,11 @@ export function useAppStore(activeSession) {
 
     const handleUpdateCartQuantity = async (cartItemId, nextQuantity) => {
         if (!activeSession) {
+            const nextGuestCartItems = saveGuestCartItems(
+                updateGuestCartItemQuantity(cartItems, cartItemId, nextQuantity)
+            )
+
+            setCartItems(nextGuestCartItems)
             return
         }
 
@@ -281,6 +333,11 @@ export function useAppStore(activeSession) {
 
     const handleRemoveFromCart = async (cartItemId) => {
         if (!activeSession) {
+            const nextGuestCartItems = saveGuestCartItems(
+                removeGuestCartItem(cartItems, cartItemId)
+            )
+
+            setCartItems(nextGuestCartItems)
             return
         }
 

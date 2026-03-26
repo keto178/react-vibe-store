@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import './Home.css'
 import Header from '../../componantes/Header/Header'
 import Card from '../Card/Card'
@@ -7,7 +7,6 @@ import CategoryListSection from './components/CategoryListSection'
 import AddToCartToast from './components/AddToCartToast'
 
 export default function Home({ categories = [], products = [], onAddToCart }) {
-    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const categorySectionRef = useRef(null)
     const productsSectionRef = useRef(null)
@@ -84,10 +83,6 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
         const result = await onAddToCart(product, selectedColor)
 
         if (!result?.ok) {
-            if (result?.requiresAuth) {
-                navigate('/Login')
-            }
-
             return result
         }
 

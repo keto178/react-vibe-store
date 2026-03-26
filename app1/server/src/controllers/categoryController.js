@@ -4,7 +4,7 @@ import Product from '../models/Product.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { serializeCategory } from '../utils/serializers.js'
 
-const CATALOG_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300'
+const CATALOG_CACHE_CONTROL = 'no-store'
 
 export const getCategories = asyncHandler(async (req, res) => {
     const categories = await Category.find().sort({ group: 1, name: 1 })

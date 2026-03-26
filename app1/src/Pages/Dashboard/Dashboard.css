@@ -484,6 +484,10 @@
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .dashboard-products-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 480px) {

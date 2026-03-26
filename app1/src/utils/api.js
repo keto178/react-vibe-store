@@ -1,5 +1,11 @@
 import { clearActiveSession, getAuthToken } from './auth'
 
+const AUTH_INVALIDATION_MESSAGES = new Set([
+    'Authentication is required.',
+    'Your session is invalid or expired. Please log in again.',
+    'The account for this session no longer exists.'
+])
+
 function normalizeBaseUrl(url) {
     return url.replace(/\/$/, '')
 }
@@ -99,10 +105,6 @@ async function apiRequest(path, options = {}) {
         )
     }
 
-    if (response.status === 401) {
-        clearActiveSession()
-    }
-
     let data
 
     try {
@@ -115,6 +117,16 @@ async function apiRequest(path, options = {}) {
             errorMessage: parseError.message
         })
         throw parseError
+    }
+
+    const shouldClearSession = (
+        response.status === 401 &&
+        Boolean(token) &&
+        AUTH_INVALIDATION_MESSAGES.has(data?.message)
+    )
+
+    if (shouldClearSession) {
+        clearActiveSession()
     }
 
     if (!response.ok) {

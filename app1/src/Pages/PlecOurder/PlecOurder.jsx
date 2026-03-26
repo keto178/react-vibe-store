@@ -5,11 +5,21 @@ import { getDiscountedPrice } from '../../utils/orders'
 import { formatPrice } from '../../utils/currency'
 import CartItemCard from './components/CartItemCard'
 
-export default function PlecOurder({ cartItems = [], onUpdateCartQuantity, onRemoveFromCart }) {
+export default function PlecOurder({ activeSession, cartItems = [], onUpdateCartQuantity, onRemoveFromCart }) {
     const navigate = useNavigate()
     const total = cartItems.reduce((sum, item) => {
         return sum + (getDiscountedPrice(item) * item.quantity)
     }, 0)
+    const isGuest = !activeSession
+
+    const handleContinueToShipping = () => {
+        if (isGuest) {
+            navigate('/Login')
+            return
+        }
+
+        navigate('/Shipping')
+    }
 
     return (
         <section className='cart-page'>
@@ -23,6 +33,7 @@ export default function PlecOurder({ cartItems = [], onUpdateCartQuantity, onRem
                     <span>Total items</span>
                     <strong>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</strong>
                     <small>{formatPrice(total)} total</small>
+                    {isGuest && <small>Guest cart is saved on this device.</small>}
                 </div>
             </div>
 
@@ -46,9 +57,9 @@ export default function PlecOurder({ cartItems = [], onUpdateCartQuantity, onRem
                         <button
                             type="button"
                             className='cart-checkout-btn'
-                            onClick={() => navigate('/Shipping')}
+                            onClick={handleContinueToShipping}
                         >
-                            Continue to Shipping
+                            {isGuest ? 'Login to Checkout' : 'Continue to Shipping'}
                         </button>
                     </aside>
                 </div>

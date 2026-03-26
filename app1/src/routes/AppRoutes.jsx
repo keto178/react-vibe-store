@@ -43,25 +43,23 @@ export default function AppRoutes({
                 <Route
                     path="/Cart"
                     element={
-                        <ProtectedRoute activeSession={activeSession}>
-                            <PlecOurder
-                                cartItems={cartItems}
-                                onUpdateCartQuantity={onUpdateCartQuantity}
-                                onRemoveFromCart={onRemoveFromCart}
-                            />
-                        </ProtectedRoute>
+                        <PlecOurder
+                            activeSession={activeSession}
+                            cartItems={cartItems}
+                            onUpdateCartQuantity={onUpdateCartQuantity}
+                            onRemoveFromCart={onRemoveFromCart}
+                        />
                     }
                 />
                 <Route
                     path="/PlecOurder"
                     element={
-                        <ProtectedRoute activeSession={activeSession}>
-                            <PlecOurder
-                                cartItems={cartItems}
-                                onUpdateCartQuantity={onUpdateCartQuantity}
-                                onRemoveFromCart={onRemoveFromCart}
-                            />
-                        </ProtectedRoute>
+                        <PlecOurder
+                            activeSession={activeSession}
+                            cartItems={cartItems}
+                            onUpdateCartQuantity={onUpdateCartQuantity}
+                            onRemoveFromCart={onRemoveFromCart}
+                        />
                     }
                 />
                 <Route
@@ -80,15 +78,13 @@ export default function AppRoutes({
                 <Route
                     path="/Orders"
                     element={
-                        <ProtectedRoute activeSession={activeSession}>
-                            <Orders
-                                activeSession={activeSession}
-                                orders={orders}
-                                onMarkOrdersAsSeen={onMarkOrdersAsSeen}
-                                onUpdateOrderStatus={onUpdateOrderStatus}
-                                onDeleteOrder={onDeleteOrder}
-                            />
-                        </ProtectedRoute>
+                        <Orders
+                            activeSession={activeSession}
+                            orders={orders}
+                            onMarkOrdersAsSeen={onMarkOrdersAsSeen}
+                            onUpdateOrderStatus={onUpdateOrderStatus}
+                            onDeleteOrder={onDeleteOrder}
+                        />
                     }
                 />
                 <Route path="/Login" element={<SingnUp initialMode="login" />} />

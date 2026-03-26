@@ -14,22 +14,8 @@ function buildRequestMeta(req) {
 }
 
 function applyCachePolicy(req, res) {
-    const requestPath = String(req.url || '').split('?')[0]
-    const normalizedPath = requestPath.startsWith('/api/')
-        ? requestPath.slice(4)
-        : requestPath
-    const isCatalogRequest = req.method === 'GET' && (
-        normalizedPath === '/products' ||
-        normalizedPath === '/categories' ||
-        normalizedPath.startsWith('/products/') ||
-        normalizedPath.startsWith('/categories/')
-    )
-
-    if (isCatalogRequest) {
-        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
-        return
-    }
-
+    // Keep API responses strongly consistent with recent writes.
+    // Catalog endpoints are updated from the dashboard and should not be served stale.
     res.setHeader('Cache-Control', 'no-store')
 }
 
