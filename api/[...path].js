@@ -15,11 +15,14 @@ function buildRequestMeta(req) {
 
 function applyCachePolicy(req, res) {
     const requestPath = String(req.url || '').split('?')[0]
+    const normalizedPath = requestPath.startsWith('/api/')
+        ? requestPath.slice(4)
+        : requestPath
     const isCatalogRequest = req.method === 'GET' && (
-        requestPath === '/api/products' ||
-        requestPath === '/api/categories' ||
-        requestPath.startsWith('/api/products/') ||
-        requestPath.startsWith('/api/categories/')
+        normalizedPath === '/products' ||
+        normalizedPath === '/categories' ||
+        normalizedPath.startsWith('/products/') ||
+        normalizedPath.startsWith('/categories/')
     )
 
     if (isCatalogRequest) {
