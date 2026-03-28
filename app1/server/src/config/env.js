@@ -75,7 +75,6 @@ const env = {
     mongoConnectMaxRetries: parseNonNegativeInt(process.env.MONGO_CONNECT_RETRIES, isProduction ? 2 : 1),
     mongoConnectRetryDelayMs: parsePositiveInt(process.env.MONGO_CONNECT_RETRY_DELAY_MS, 1500),
     mongoMaxPoolSize: parsePositiveInt(process.env.MONGO_MAX_POOL_SIZE, isProduction ? 10 : 5),
-    allowProductionMemoryFallback: process.env.ALLOW_PRODUCTION_MEMORY_FALLBACK === 'true',
     jwtSecret: process.env.JWT_SECRET || 'replace-this-with-a-secure-secret',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
     clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -129,10 +128,6 @@ export function getConfigDiagnostics() {
 
     if (isProduction && (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret)) {
         warnings.push('Cloudinary storage is not configured. Upload endpoints will reject files in production.')
-    }
-
-    if (isProduction && env.allowProductionMemoryFallback) {
-        warnings.push('ALLOW_PRODUCTION_MEMORY_FALLBACK=true is enabled. Data may be temporary while MongoDB is unavailable.')
     }
 
     return {

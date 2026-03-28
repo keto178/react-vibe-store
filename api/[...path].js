@@ -31,7 +31,6 @@ async function loadCoreServerModules() {
             connectToDatabase: dbModule.connectToDatabase,
             getDatabaseDebugState: dbModule.getDatabaseDebugState,
             getConfigDiagnostics: envModule.getConfigDiagnostics,
-            runtimeEnv: envModule.default,
             seedDefaults: seedModule.seedDefaults
         })).catch((error) => {
             coreModulesPromise = null
@@ -83,7 +82,6 @@ async function resolveServerApp() {
         connectToDatabase,
         getDatabaseDebugState,
         getConfigDiagnostics,
-        runtimeEnv,
         seedDefaults
     } = await loadCoreServerModules()
 
@@ -97,13 +95,11 @@ async function resolveServerApp() {
         })
         return app
     } catch (error) {
-        const allowProductionFallback = Boolean(runtimeEnv.allowProductionMemoryFallback)
-        const shouldUseFallback = (!isVercelDeployment && process.env.NODE_ENV !== 'production') || allowProductionFallback
+        const shouldUseFallback = !isVercelDeployment && process.env.NODE_ENV !== 'production'
         const isMissingMongoUri = String(error.message || '').includes('MongoDB URI is not configured')
 
         console.error('[api/startup] MongoDB startup failed. Attempting fallback app.', {
             isVercelDeployment,
-            allowProductionFallback,
             shouldUseFallback,
             database: getDatabaseDebugState(),
             errorMessage: error.message,

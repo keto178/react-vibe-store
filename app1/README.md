@@ -13,7 +13,7 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 - User order history and admin order management
 - Admin email notification support through Nodemailer
 - Local file-storage fallback for backend development when MongoDB is unavailable
-- Production API prefers MongoDB-only mode; if emergency in-memory fallback is enabled, write operations are blocked to prevent data loss
+- Production API runs in MongoDB-only mode to guarantee persistent data
 
 ## Frontend
 
@@ -74,7 +74,6 @@ Important backend environment variables:
 - `MONGO_SERVER_SELECTION_TIMEOUT_MS`: Mongo initial server selection timeout (default `15000` in production)
 - `MONGO_CONNECT_RETRIES`: retry count before failing startup (default `2` in production)
 - `MONGO_CONNECT_RETRY_DELAY_MS`: retry delay in milliseconds (default `1500`)
-- `ALLOW_PRODUCTION_MEMORY_FALLBACK`: set to `true` only for emergency temporary access when MongoDB is down
 - `JWT_SECRET`: secret used to sign auth tokens
 - `ADMIN_USERNAME`: seeded admin username
 - `ADMIN_EMAIL`: seeded admin login email
