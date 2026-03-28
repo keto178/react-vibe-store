@@ -38,6 +38,9 @@ import {
 
 const app = express()
 const ALLOWED_NICOTINE_LEVELS = [9, 12, 30, 50]
+const TEMPORARY_STORAGE_WRITE_BLOCKED_MESSAGE = (
+    'Saving is temporarily disabled because the server is running in memory fallback mode. Restore MongoDB to enable persistent changes.'
+)
 
 function isAllowedDevOrigin(origin) {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
@@ -331,6 +334,18 @@ app.use(cors({
 }))
 app.use(express.json({ limit: '15mb' }))
 app.use(express.urlencoded({ extended: true, limit: '15mb' }))
+app.use((req, res, next) => {
+    const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(req.method || '').toUpperCase())
+    const isTemporaryServerlessStore = process.env.VERCEL === '1' && getFileStorageMode() === 'memory'
+    const isAllowedWriteDuringFallback = req.method === 'POST' && req.path === '/api/auth/login'
+
+    if (!isTemporaryServerlessStore || !isWriteMethod || isAllowedWriteDuringFallback) {
+        next()
+        return
+    }
+
+    sendError(res, 503, TEMPORARY_STORAGE_WRITE_BLOCKED_MESSAGE)
+})
 
 app.get('/api/health', (req, res) => {
     res.json({
@@ -390,6 +405,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(201).json({
         message: 'Registration successful.',
+        authMode: 'fallback',
         token: signAuthToken(user),
         user: sanitizeUser(user)
     })
@@ -433,6 +449,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.json({
             message: 'Login successful.',
+            authMode: 'fallback',
             token: signAuthToken(user),
             user: sanitizeUser(user)
         })

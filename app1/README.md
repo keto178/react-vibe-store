@@ -13,7 +13,7 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 - User order history and admin order management
 - Admin email notification support through Nodemailer
 - Local file-storage fallback for backend development when MongoDB is unavailable
-- Production API prefers MongoDB-only mode and can use optional emergency in-memory fallback via env flag
+- Production API prefers MongoDB-only mode; if emergency in-memory fallback is enabled, write operations are blocked to prevent data loss
 
 ## Frontend
 

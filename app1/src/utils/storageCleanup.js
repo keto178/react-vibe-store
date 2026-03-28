@@ -25,7 +25,7 @@ function cleanupLegacySession(storageObject) {
     try {
         const parsedSession = JSON.parse(savedSession)
 
-        if (!parsedSession?.token || !parsedSession?.email || parsedSession?.authMode === 'fallback') {
+        if (!parsedSession?.token || !parsedSession?.email) {
             storageObject.removeItem(SESSION_STORAGE_KEY)
         }
     } catch {

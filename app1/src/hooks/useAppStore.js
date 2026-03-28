@@ -59,7 +59,9 @@ export function useAppStore(activeSession) {
     const hasSession = Boolean(sessionId)
     const requiresPhoneVerification = Boolean(activeSession?.requiresPhoneVerification)
     const isFallbackSession = activeSession?.authMode === 'fallback'
-    const offlineFeatureMessage = 'Backend is not running. Start the API server to use this feature.'
+    const offlineFeatureMessage = (
+        'Saving is temporarily disabled because the server is running in fallback mode. Reconnect MongoDB to persist changes.'
+    )
     const phoneVerificationRequiredMessage = 'Verify your phone number to continue.'
 
     const refreshCatalog = async () => {
