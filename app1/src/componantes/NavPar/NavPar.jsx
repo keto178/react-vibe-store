@@ -1,19 +1,28 @@
-import React, { useRef, useState } from 'react'
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import search_icon from '../../assets/img/search_icon.png'
 import basket_icon from '../../assets/img/basket_icon.png'
 import './NavPar.css'
 import { clearActiveSession, isDashboardOwner } from '../../utils/auth'
 
-export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount = 0 }) {
+const NavPar = memo(function NavPar({ activeSession, cartCount = 0, unreadOrdersCount = 0 }) {
     const navigate = useNavigate()
     const location = useLocation()
     const mobileSearchInputRef = useRef(null)
+    const mobileSearchFocusTimeoutRef = useRef(0)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
     const canOpenDashboard = isDashboardOwner(activeSession)
     const currentPath = location.pathname.toLowerCase()
-    const currentSearchTerm = new URLSearchParams(location.search).get('search') || ''
+    const currentSearchTerm = useMemo(() => new URLSearchParams(location.search).get('search') || '', [location.search])
+
+    useEffect(() => {
+        return () => {
+            if (mobileSearchFocusTimeoutRef.current) {
+                window.clearTimeout(mobileSearchFocusTimeoutRef.current)
+            }
+        }
+    }, [])
 
     const isActivePath = (...paths) => paths.some((path) => path.toLowerCase() === currentPath)
     const isSearchActive = isMobileSearchOpen || currentSearchTerm.length > 0
@@ -58,7 +67,11 @@ export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount
         setIsMobileSearchOpen(true)
         setIsMobileMenuOpen(false)
 
-        window.setTimeout(() => {
+        if (mobileSearchFocusTimeoutRef.current) {
+            window.clearTimeout(mobileSearchFocusTimeoutRef.current)
+        }
+
+        mobileSearchFocusTimeoutRef.current = window.setTimeout(() => {
             mobileSearchInputRef.current?.focus()
         }, 120)
     }
@@ -324,4 +337,6 @@ export default function NavPar({ activeSession, cartCount = 0, unreadOrdersCount
             </nav>
         </>
     )
-}
+})
+
+export default NavPar

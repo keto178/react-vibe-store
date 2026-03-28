@@ -14,7 +14,6 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
     const [cartToast, setCartToast] = useState(null)
     const [mobileSortOrder, setMobileSortOrder] = useState('featured')
     const [mobileViewMode, setMobileViewMode] = useState('grid')
-    const categoriesCount = categories.length
     const activeSearchTerm = searchParams.get('search')?.trim() || ''
     const normalizedSearchTerm = activeSearchTerm.toLowerCase()
     const hasSearchTerm = normalizedSearchTerm.length > 0
@@ -123,8 +122,6 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
         <div className='home-page'>
             <AddToCartToast toast={cartToast} onClose={() => setCartToast(null)} />
             <Header
-                productsCount={products.length}
-                categoriesCount={categoriesCount}
                 hasProducts={products.length > 0}
                 onBrowseProducts={scrollToProducts}
             />

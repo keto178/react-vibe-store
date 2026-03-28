@@ -7,8 +7,7 @@
     border: 1px solid rgba(22, 44, 69, 0.2);
     border-radius: 20px;
     background: linear-gradient(180deg, #f7fbff 0%, #eff5fb 100%);
-    box-shadow: 0 18px 34px rgba(13, 31, 52, 0.12);
-    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 24px rgba(13, 31, 52, 0.1);
 }
 
 .nav-desktop-shell {
