@@ -95,24 +95,14 @@ async function resolveServerApp() {
         })
         return app
     } catch (error) {
-        const shouldUseFallback = !isVercelDeployment && process.env.NODE_ENV !== 'production'
         const isMissingMongoUri = String(error.message || '').includes('MongoDB URI is not configured')
 
         console.error('[api/startup] MongoDB startup failed. Attempting fallback app.', {
             isVercelDeployment,
-            shouldUseFallback,
             database: getDatabaseDebugState(),
             errorMessage: error.message,
             stack: error.stack || ''
         })
-
-        if (!shouldUseFallback) {
-            throw new Error(
-                isMissingMongoUri
-                    ? 'Database connection failed: MONGODB_URI is missing in server environment.'
-                    : 'Database connection failed. Fallback storage is disabled in production deployments.'
-            )
-        }
 
         try {
             const {
@@ -121,7 +111,10 @@ async function resolveServerApp() {
             } = await loadFallbackModules()
 
             await prepareFileApi()
-            console.warn('[api/startup] Using fallback in-memory API app.')
+            console.warn('[api/startup] Using fallback API app.', {
+                reason: isMissingMongoUri ? 'missing-mongodb-uri' : 'mongodb-startup-failed',
+                storageMode: isVercelDeployment ? 'memory' : 'file'
+            })
             return fileApp
         } catch (fallbackError) {
             console.error('[api/startup] Fallback API app failed to initialize.', {

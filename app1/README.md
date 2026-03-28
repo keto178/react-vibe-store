@@ -13,7 +13,7 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 - User order history and admin order management
 - Admin email notification support through Nodemailer
 - Local file-storage fallback for backend development when MongoDB is unavailable
-- Production API runs in MongoDB-only mode to guarantee persistent data
+- Production API prefers MongoDB and falls back to temporary in-memory storage when the database is unavailable
 
 ## Frontend
 
@@ -35,7 +35,7 @@ This project is a Vite app, not Create React App.
 
 If you deploy the whole repository to Vercel, the included `vercel.json` already points Vercel to the nested `app1` frontend and keeps client-side routing working.
 
-For the backend to work on Vercel, add these environment variables in the Vercel project settings:
+For full persistent backend support on Vercel, add these environment variables in the Vercel project settings:
 
 - `MONGODB_URI`
 - `DATABASE_URL` (optional alias)
@@ -53,6 +53,8 @@ For the backend to work on Vercel, add these environment variables in the Vercel
 - `SMTP_USER`
 - `SMTP_PASS`
 - `SMTP_FROM`
+
+If MongoDB is not configured on Vercel, the API now falls back to the bundled file-store data in temporary in-memory mode. Read operations keep working, but write operations remain limited until MongoDB is restored.
 
 If you use a custom domain instead of `*.vercel.app`, also set:
 

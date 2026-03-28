@@ -36,9 +36,18 @@ function cloneStore(store) {
     return JSON.parse(JSON.stringify(normalizeStoreShape(store)))
 }
 
-function getMemoryStore() {
+async function loadBundledStore() {
+    try {
+        const fileContents = await readFile(DATA_FILE_URL, 'utf8')
+        return normalizeStoreShape(JSON.parse(fileContents))
+    } catch {
+        return cloneEmptyStore()
+    }
+}
+
+async function getMemoryStore() {
     if (!globalThis[MEMORY_STORE_KEY]) {
-        globalThis[MEMORY_STORE_KEY] = cloneEmptyStore()
+        globalThis[MEMORY_STORE_KEY] = await loadBundledStore()
     }
 
     return globalThis[MEMORY_STORE_KEY]
@@ -54,7 +63,7 @@ export function createId(prefix = '') {
 
 export async function readStore() {
     if (isServerlessDeployment) {
-        return cloneStore(getMemoryStore())
+        return cloneStore(await getMemoryStore())
     }
 
     await mkdir(DATA_DIRECTORY_URL, { recursive: true })
