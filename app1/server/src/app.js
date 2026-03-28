@@ -50,6 +50,7 @@ app.use('/api', (req, res, next) => {
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
+        storage: 'mongodb',
         fileStorage: getExternalStorageMode()
     })
 })
