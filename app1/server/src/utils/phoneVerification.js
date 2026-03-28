@@ -5,8 +5,14 @@ export const PHONE_OTP_LENGTH = 6
 export const PHONE_OTP_TTL_MS = 10 * 60 * 1000
 export const PHONE_OTP_MAX_ATTEMPTS = 5
 
-export function normalizePhoneNumber(rawValue = '') {
+function normalizeCountryCode(value = '+20') {
+    const normalized = String(value || '').trim().replace(/\D/g, '')
+    return normalized ? `+${normalized}` : '+20'
+}
+
+export function normalizePhoneNumber(rawValue = '', options = {}) {
     const trimmedValue = String(rawValue || '').trim()
+    const defaultCountryCode = normalizeCountryCode(options.defaultCountryCode)
 
     if (!trimmedValue) {
         return ''
@@ -19,7 +25,19 @@ export function normalizePhoneNumber(rawValue = '') {
         return ''
     }
 
-    return hasLeadingPlus ? `+${digitsOnlyValue}` : digitsOnlyValue
+    if (hasLeadingPlus) {
+        return `+${digitsOnlyValue}`
+    }
+
+    if (digitsOnlyValue.startsWith('00')) {
+        return `+${digitsOnlyValue.slice(2)}`
+    }
+
+    if (digitsOnlyValue.startsWith('0')) {
+        return `${defaultCountryCode}${digitsOnlyValue.slice(1)}`
+    }
+
+    return `+${digitsOnlyValue}`
 }
 
 export function isValidPhoneNumber(normalizedPhoneNumber) {
@@ -27,11 +45,7 @@ export function isValidPhoneNumber(normalizedPhoneNumber) {
         return false
     }
 
-    const digitsOnlyValue = normalizedPhoneNumber.startsWith('+')
-        ? normalizedPhoneNumber.slice(1)
-        : normalizedPhoneNumber
-
-    return /^[1-9]\d{7,14}$/.test(digitsOnlyValue)
+    return /^\+[1-9]\d{7,14}$/.test(normalizedPhoneNumber)
 }
 
 export function extractPhoneLast4(normalizedPhoneNumber) {

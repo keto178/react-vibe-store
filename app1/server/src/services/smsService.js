@@ -47,15 +47,11 @@ export async function sendPhoneVerificationCodeSms({ phoneNumber, code }) {
     const smsMessage = `Your verification code is: ${code}`
 
     if (!isTwilioConfigured()) {
-        const isProduction = env.nodeEnv === 'production'
-
         return {
             delivery: 'preview',
             provider: 'preview',
-            verificationCode: isProduction ? '' : code,
-            message: isProduction
-                ? 'SMS provider is not configured.'
-                : 'SMS provider is not configured. Using verification code preview.'
+            verificationCode: code,
+            message: 'SMS provider is not configured. Using verification code preview.'
         }
     }
 

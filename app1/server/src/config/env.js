@@ -27,6 +27,7 @@ const env = {
     smtpPass: process.env.SMTP_PASS || '',
     smtpFrom: process.env.SMTP_FROM || 'Store Notifications <no-reply@example.com>',
     phoneDataSecret: process.env.PHONE_DATA_SECRET || process.env.JWT_SECRET || '',
+    phoneDefaultCountryCode: process.env.PHONE_DEFAULT_COUNTRY_CODE || '+20',
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
     twilioFromNumber: process.env.TWILIO_FROM_NUMBER || ''

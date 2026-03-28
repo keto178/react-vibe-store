@@ -408,6 +408,16 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const store = await prepareFileStore()
         const user = store.users.find((item) => item.email === email)
+        const isTemporaryServerlessStore = process.env.VERCEL === '1' && getFileStorageMode() === 'memory'
+
+        if (!user && isTemporaryServerlessStore) {
+            sendError(
+                res,
+                503,
+                'Login is temporarily unavailable because the database connection failed and fallback storage is temporary. Please try again in a moment.'
+            )
+            return
+        }
 
         if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
             sendError(res, 401, 'Incorrect email or password.')
@@ -438,7 +448,10 @@ app.get('/api/auth/me', authenticate, (req, res) => {
 })
 
 app.post('/api/auth/phone/request-code', authenticate, async (req, res) => {
-    const normalizedPhoneNumber = normalizePhoneNumber(req.body?.phoneNumber || req.body?.phone || '')
+    const normalizedPhoneNumber = normalizePhoneNumber(
+        req.body?.phoneNumber || req.body?.phone || '',
+        { defaultCountryCode: env.phoneDefaultCountryCode }
+    )
 
     if (!normalizedPhoneNumber || !isValidPhoneNumber(normalizedPhoneNumber)) {
         sendError(res, 400, 'Please enter a valid phone number in international format.')

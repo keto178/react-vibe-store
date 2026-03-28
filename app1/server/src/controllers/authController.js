@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import User from '../models/User.js'
+import env from '../config/env.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { getDatabaseDebugState } from '../config/db.js'
 import { encryptPhoneNumber } from '../services/phoneCrypto.js'
@@ -141,7 +142,10 @@ export const requestPhoneVerificationCode = asyncHandler(async (req, res) => {
         throw new Error('Phone number is already verified for this account.')
     }
 
-    const normalizedPhoneNumber = normalizePhoneNumber(req.body?.phoneNumber || req.body?.phone || '')
+    const normalizedPhoneNumber = normalizePhoneNumber(
+        req.body?.phoneNumber || req.body?.phone || '',
+        { defaultCountryCode: env.phoneDefaultCountryCode }
+    )
 
     if (!normalizedPhoneNumber || !isValidPhoneNumber(normalizedPhoneNumber)) {
         res.status(400)
