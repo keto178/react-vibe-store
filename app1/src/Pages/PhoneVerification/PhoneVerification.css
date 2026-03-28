@@ -1,0 +1,108 @@
+.phone-verification-page {
+    width: min(900px, 92%);
+    margin: 24px auto;
+    min-height: calc(100vh - 180px);
+    display: grid;
+    place-items: center;
+}
+
+.phone-verification-card {
+    width: min(100%, 460px);
+    background: #ffffff;
+    border: 1px solid #d8e4ef;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 18px 40px rgba(12, 31, 50, 0.12);
+}
+
+.phone-verification-card h1 {
+    margin: 0 0 10px;
+    color: #123456;
+}
+
+.phone-verification-subtitle {
+    margin: 0 0 20px;
+    color: #4a6783;
+    line-height: 1.6;
+}
+
+.phone-verification-status {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+.phone-verification-status.success {
+    background: #e8fff1;
+    color: #167647;
+    border: 1px solid #95dfb3;
+}
+
+.phone-verification-status.error {
+    background: #fff1f1;
+    color: #bb2d3b;
+    border: 1px solid #efb4ba;
+}
+
+.phone-verification-form {
+    display: grid;
+    gap: 12px;
+}
+
+.phone-verification-form label {
+    color: #143a5a;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.phone-verification-form input {
+    width: 100%;
+    border: 1px solid #c8d9e8;
+    border-radius: 10px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 0.95rem;
+}
+
+.phone-verification-form input:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.3);
+    outline-offset: 1px;
+    border-color: #1e4f80;
+}
+
+.phone-verification-preview {
+    margin: 0;
+    color: #1e3a56;
+    background: #eff6ff;
+    border: 1px dashed #7aa8df;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.phone-verification-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.phone-verification-form .btn {
+    min-height: 42px;
+    border-radius: 10px;
+    border: none;
+    padding: 0 16px;
+    background: linear-gradient(135deg, #0f2842 0%, #1d4f81 100%);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.phone-verification-form .btn.secondary {
+    background: #e9f1f8;
+    color: #17324d;
+}
+
+.phone-verification-form .btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}

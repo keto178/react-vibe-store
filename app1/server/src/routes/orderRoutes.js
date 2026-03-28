@@ -7,15 +7,15 @@ import {
     markOrdersAsSeen,
     updateOrderStatus
 } from '../controllers/orderController.js'
-import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { authenticate, requireAdmin, requirePhoneVerified } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.post('/checkout', authenticate, checkout)
-router.get('/me', authenticate, getOrdersForCurrentUser)
-router.get('/', authenticate, requireAdmin, getAllOrders)
-router.patch('/mark-seen', authenticate, requireAdmin, markOrdersAsSeen)
-router.patch('/:orderId/status', authenticate, requireAdmin, updateOrderStatus)
-router.delete('/:orderId', authenticate, requireAdmin, deleteOrder)
+router.post('/checkout', authenticate, requirePhoneVerified, checkout)
+router.get('/me', authenticate, requirePhoneVerified, getOrdersForCurrentUser)
+router.get('/', authenticate, requirePhoneVerified, requireAdmin, getAllOrders)
+router.patch('/mark-seen', authenticate, requirePhoneVerified, requireAdmin, markOrdersAsSeen)
+router.patch('/:orderId/status', authenticate, requirePhoneVerified, requireAdmin, updateOrderStatus)
+router.delete('/:orderId', authenticate, requirePhoneVerified, requireAdmin, deleteOrder)
 
 export default router

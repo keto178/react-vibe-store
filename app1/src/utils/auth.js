@@ -23,6 +23,9 @@ function buildSession(authPayload) {
         username: normalizeUsername(user?.username),
         email: user?.email?.trim().toLowerCase() || '',
         role: user?.role || 'user',
+        phoneMasked: user?.phoneMasked || '',
+        isPhoneVerified: Boolean(user?.isPhoneVerified),
+        requiresPhoneVerification: Boolean(user?.requiresPhoneVerification),
         token: authPayload?.token || user?.token || '',
         authMode: authPayload?.authMode || user?.authMode || 'api'
     }

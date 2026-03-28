@@ -4,6 +4,8 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import env from './config/env.js'
 import { sendAdminOrderEmail } from './services/emailService.js'
+import { encryptPhoneNumber } from './services/phoneCrypto.js'
+import { sendPhoneVerificationCodeSms } from './services/smsService.js'
 import {
     createId,
     getFileStorageMode,
@@ -14,6 +16,19 @@ import {
     writeStore
 } from './services/fileStore.js'
 import { calculateOrderSummary } from './utils/order.js'
+import {
+    PHONE_OTP_LENGTH,
+    PHONE_OTP_MAX_ATTEMPTS,
+    PHONE_OTP_TTL_MS,
+    buildPhoneVerificationRecord,
+    comparePhoneVerificationCode,
+    createPhoneVerificationCode,
+    extractPhoneLast4,
+    hashPhoneVerificationCode,
+    isPhoneVerificationExpired,
+    isValidPhoneNumber,
+    normalizePhoneNumber
+} from './utils/phoneVerification.js'
 
 const app = express()
 const ALLOWED_NICOTINE_LEVELS = [9, 12, 30, 50]
@@ -261,6 +276,20 @@ function requireAdmin(req, res, next) {
     next()
 }
 
+function requirePhoneVerified(req, res, next) {
+    if (req.user?.role === 'admin') {
+        next()
+        return
+    }
+
+    if (req.user?.phoneVerified) {
+        next()
+        return
+    }
+
+    sendError(res, 403, 'Phone verification is required to continue.')
+}
+
 function signAuthToken(user) {
     return jwt.sign(
         {
@@ -335,6 +364,16 @@ app.post('/api/auth/register', async (req, res) => {
         email,
         passwordHash: await bcrypt.hash(password, 10),
         role: 'user',
+        phoneNumberEncrypted: '',
+        phoneNumberLast4: '',
+        phoneVerified: false,
+        phoneVerifiedAt: null,
+        phoneVerification: {
+            codeHash: '',
+            attempts: 0,
+            requestedAt: null,
+            expiresAt: null
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     }
@@ -398,6 +437,149 @@ app.get('/api/auth/me', authenticate, (req, res) => {
     })
 })
 
+app.post('/api/auth/phone/request-code', authenticate, async (req, res) => {
+    const normalizedPhoneNumber = normalizePhoneNumber(req.body?.phoneNumber || req.body?.phone || '')
+
+    if (!normalizedPhoneNumber || !isValidPhoneNumber(normalizedPhoneNumber)) {
+        sendError(res, 400, 'Please enter a valid phone number in international format.')
+        return
+    }
+
+    const store = await readStore()
+    const user = store.users.find((item) => item.id === req.user.id)
+
+    if (!user) {
+        sendError(res, 401, 'The account for this session no longer exists.')
+        return
+    }
+
+    if (user.role === 'admin') {
+        sendError(res, 400, 'Admin accounts do not require phone verification.')
+        return
+    }
+
+    if (user.phoneVerified) {
+        sendError(res, 409, 'Phone number is already verified for this account.')
+        return
+    }
+
+    const verificationCode = createPhoneVerificationCode()
+    const verificationCodeHash = await hashPhoneVerificationCode(verificationCode)
+
+    user.phoneNumberEncrypted = encryptPhoneNumber(normalizedPhoneNumber)
+    user.phoneNumberLast4 = extractPhoneLast4(normalizedPhoneNumber)
+    user.phoneVerified = false
+    user.phoneVerifiedAt = null
+    user.phoneVerification = buildPhoneVerificationRecord(verificationCodeHash)
+    user.updatedAt = new Date().toISOString()
+
+    await writeStore(store)
+
+    const deliveryResult = await sendPhoneVerificationCodeSms({
+        phoneNumber: normalizedPhoneNumber,
+        code: verificationCode
+    })
+
+    res.status(201).json({
+        message: deliveryResult.message || (
+            deliveryResult.delivery === 'sms'
+                ? 'Verification code sent by SMS.'
+                : 'SMS is not configured. Verification code is available in preview mode.'
+        ),
+        delivery: deliveryResult.delivery,
+        otpLength: PHONE_OTP_LENGTH,
+        expiresInSeconds: Math.floor(PHONE_OTP_TTL_MS / 1000),
+        verificationCode: deliveryResult.verificationCode || ''
+    })
+})
+
+app.post('/api/auth/phone/verify-code', authenticate, async (req, res) => {
+    const code = String(req.body?.code || '').trim()
+
+    if (!/^\d{4,6}$/.test(code)) {
+        sendError(res, 400, 'Please enter a valid verification code.')
+        return
+    }
+
+    const store = await readStore()
+    const user = store.users.find((item) => item.id === req.user.id)
+
+    if (!user) {
+        sendError(res, 401, 'The account for this session no longer exists.')
+        return
+    }
+
+    if (user.role === 'admin') {
+        sendError(res, 400, 'Admin accounts do not require phone verification.')
+        return
+    }
+
+    if (user.phoneVerified) {
+        res.json({
+            message: 'Phone number already verified.',
+            user: sanitizeUser(user)
+        })
+        return
+    }
+
+    const verificationRecord = user.phoneVerification
+
+    if (!verificationRecord?.codeHash || !verificationRecord?.expiresAt) {
+        sendError(res, 400, 'Request a verification code before confirming your phone number.')
+        return
+    }
+
+    if (isPhoneVerificationExpired(verificationRecord)) {
+        user.phoneVerification = {
+            codeHash: '',
+            attempts: 0,
+            requestedAt: null,
+            expiresAt: null
+        }
+        user.updatedAt = new Date().toISOString()
+        await writeStore(store)
+
+        sendError(res, 400, 'Verification code expired. Request a new code.')
+        return
+    }
+
+    if ((Number(verificationRecord.attempts) || 0) >= PHONE_OTP_MAX_ATTEMPTS) {
+        sendError(res, 429, 'Too many invalid attempts. Request a new verification code.')
+        return
+    }
+
+    const isCodeValid = await comparePhoneVerificationCode(code, verificationRecord.codeHash)
+
+    if (!isCodeValid) {
+        user.phoneVerification.attempts = (Number(verificationRecord.attempts) || 0) + 1
+        user.updatedAt = new Date().toISOString()
+        await writeStore(store)
+        sendError(res, 401, 'Invalid verification code.')
+        return
+    }
+
+    if (!user.phoneNumberEncrypted || !user.phoneNumberLast4) {
+        sendError(res, 400, 'Phone number data is missing. Request a new verification code.')
+        return
+    }
+
+    user.phoneVerified = true
+    user.phoneVerifiedAt = new Date().toISOString()
+    user.phoneVerification = {
+        codeHash: '',
+        attempts: 0,
+        requestedAt: null,
+        expiresAt: null
+    }
+    user.updatedAt = new Date().toISOString()
+    await writeStore(store)
+
+    res.json({
+        message: 'Phone number verified successfully.',
+        user: sanitizeUser(user)
+    })
+})
+
 app.get('/api/categories', async (req, res) => {
     const store = await prepareFileStore()
     const categories = store.categories
@@ -409,7 +591,7 @@ app.get('/api/categories', async (req, res) => {
     res.json({ categories })
 })
 
-app.post('/api/categories', authenticate, requireAdmin, async (req, res) => {
+app.post('/api/categories', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const name = req.body.name?.trim()
     const group = req.body.group === 'Liquid' ? 'Liquid' : 'Device'
@@ -448,7 +630,7 @@ app.post('/api/categories', authenticate, requireAdmin, async (req, res) => {
     })
 })
 
-app.put('/api/categories/:categoryId', authenticate, requireAdmin, async (req, res) => {
+app.put('/api/categories/:categoryId', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const category = store.categories.find((item) => item.id === req.params.categoryId)
 
@@ -514,7 +696,7 @@ app.put('/api/categories/:categoryId', authenticate, requireAdmin, async (req, r
     })
 })
 
-app.delete('/api/categories/:categoryId', authenticate, requireAdmin, async (req, res) => {
+app.delete('/api/categories/:categoryId', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const category = store.categories.find((item) => item.id === req.params.categoryId)
 
@@ -576,7 +758,7 @@ app.get('/api/products/:productId', async (req, res) => {
     })
 })
 
-app.post('/api/products', authenticate, requireAdmin, async (req, res) => {
+app.post('/api/products', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const category = ensureCategoryForProductRequest(store, req.body)
     const colors = Array.isArray(req.body.colors) && req.body.colors.length > 0
@@ -627,7 +809,7 @@ app.post('/api/products', authenticate, requireAdmin, async (req, res) => {
     })
 })
 
-app.put('/api/products/:productId', authenticate, requireAdmin, async (req, res) => {
+app.put('/api/products/:productId', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const product = store.products.find((item) => item.id === req.params.productId)
     const category = ensureCategoryForProductRequest(store, req.body)
@@ -699,7 +881,7 @@ app.put('/api/products/:productId', authenticate, requireAdmin, async (req, res)
     })
 })
 
-app.delete('/api/products/:productId', authenticate, requireAdmin, async (req, res) => {
+app.delete('/api/products/:productId', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const product = store.products.find((item) => item.id === req.params.productId)
 
@@ -722,7 +904,7 @@ app.delete('/api/products/:productId', authenticate, requireAdmin, async (req, r
     })
 })
 
-app.get('/api/cart', authenticate, async (req, res) => {
+app.get('/api/cart', authenticate, requirePhoneVerified, async (req, res) => {
     const store = await readStore()
     const cart = getCartForUser(store, req.user.id)
 
@@ -732,7 +914,7 @@ app.get('/api/cart', authenticate, async (req, res) => {
     })
 })
 
-app.post('/api/cart/items', authenticate, async (req, res) => {
+app.post('/api/cart/items', authenticate, requirePhoneVerified, async (req, res) => {
     const store = await readStore()
     const product = store.products.find((item) => item.id === req.body.productId)
 
@@ -778,7 +960,7 @@ app.post('/api/cart/items', authenticate, async (req, res) => {
     })
 })
 
-app.patch('/api/cart/items/:itemId', authenticate, async (req, res) => {
+app.patch('/api/cart/items/:itemId', authenticate, requirePhoneVerified, async (req, res) => {
     const store = await readStore()
     const cart = getCartForUser(store, req.user.id)
     const item = cart.items.find((entry) => entry.id === req.params.itemId)
@@ -809,7 +991,7 @@ app.patch('/api/cart/items/:itemId', authenticate, async (req, res) => {
     })
 })
 
-app.delete('/api/cart/items/:itemId', authenticate, async (req, res) => {
+app.delete('/api/cart/items/:itemId', authenticate, requirePhoneVerified, async (req, res) => {
     const store = await readStore()
     const cart = getCartForUser(store, req.user.id)
     const existingLength = cart.items.length
@@ -830,7 +1012,7 @@ app.delete('/api/cart/items/:itemId', authenticate, async (req, res) => {
     })
 })
 
-app.post('/api/orders/checkout', authenticate, async (req, res) => {
+app.post('/api/orders/checkout', authenticate, requirePhoneVerified, async (req, res) => {
     const requiredFields = [
         'fullName',
         'email',
@@ -905,7 +1087,7 @@ app.post('/api/orders/checkout', authenticate, async (req, res) => {
     })
 })
 
-app.get('/api/orders/me', authenticate, async (req, res) => {
+app.get('/api/orders/me', authenticate, requirePhoneVerified, async (req, res) => {
     const store = await readStore()
     const orders = store.orders
         .filter((order) => order.customerSession?.userId === req.user.id)
@@ -914,7 +1096,7 @@ app.get('/api/orders/me', authenticate, async (req, res) => {
     res.json({ orders })
 })
 
-app.get('/api/orders', authenticate, requireAdmin, async (req, res) => {
+app.get('/api/orders', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
 
     res.json({
@@ -922,7 +1104,7 @@ app.get('/api/orders', authenticate, requireAdmin, async (req, res) => {
     })
 })
 
-app.patch('/api/orders/mark-seen', authenticate, requireAdmin, async (req, res) => {
+app.patch('/api/orders/mark-seen', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
 
     store.orders = store.orders.map((order) => ({
@@ -939,7 +1121,7 @@ app.patch('/api/orders/mark-seen', authenticate, requireAdmin, async (req, res) 
     })
 })
 
-app.patch('/api/orders/:orderId/status', authenticate, requireAdmin, async (req, res) => {
+app.patch('/api/orders/:orderId/status', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
     const status = String(req.body.status || '').trim().toLowerCase()
     const store = await readStore()
@@ -969,7 +1151,7 @@ app.patch('/api/orders/:orderId/status', authenticate, requireAdmin, async (req,
     })
 })
 
-app.delete('/api/orders/:orderId', authenticate, requireAdmin, async (req, res) => {
+app.delete('/api/orders/:orderId', authenticate, requirePhoneVerified, requireAdmin, async (req, res) => {
     const store = await readStore()
     const existingLength = store.orders.length
 

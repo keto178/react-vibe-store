@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import env from '../config/env.js'
+import { maskPhoneNumber } from '../utils/phoneVerification.js'
 
 const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
 const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
@@ -79,11 +80,18 @@ export async function writeStore(store) {
 }
 
 export function sanitizeUser(user) {
+    const isPhoneVerified = user.role === 'admin'
+        ? true
+        : Boolean(user.phoneVerified)
+
     return {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role || 'user'
+        role: user.role || 'user',
+        phoneMasked: maskPhoneNumber(user.phoneNumberLast4 || ''),
+        isPhoneVerified,
+        requiresPhoneVerification: user.role === 'admin' ? false : !isPhoneVerified
     }
 }
 
@@ -103,6 +111,16 @@ export async function prepareFileStore() {
             email: adminEmail,
             passwordHash: await bcrypt.hash(env.adminPassword, 10),
             role: 'admin',
+            phoneNumberEncrypted: '',
+            phoneNumberLast4: '',
+            phoneVerified: true,
+            phoneVerifiedAt: new Date().toISOString(),
+            phoneVerification: {
+                codeHash: '',
+                attempts: 0,
+                requestedAt: null,
+                expiresAt: null
+            },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         })
@@ -122,7 +140,88 @@ export async function prepareFileStore() {
             existingAdmin.email = adminEmail
             existingAdmin.username = adminUsername
             existingAdmin.passwordHash = await bcrypt.hash(env.adminPassword, 10)
+            existingAdmin.phoneNumberEncrypted = existingAdmin.phoneNumberEncrypted || ''
+            existingAdmin.phoneNumberLast4 = existingAdmin.phoneNumberLast4 || ''
+            existingAdmin.phoneVerified = true
+            existingAdmin.phoneVerifiedAt = existingAdmin.phoneVerifiedAt || new Date().toISOString()
+            existingAdmin.phoneVerification = {
+                codeHash: '',
+                attempts: 0,
+                requestedAt: null,
+                expiresAt: null
+            }
             existingAdmin.updatedAt = new Date().toISOString()
+            hasChanges = true
+        }
+    }
+
+    for (const user of store.users) {
+        let userChanged = false
+
+        if (typeof user.phoneNumberEncrypted !== 'string') {
+            user.phoneNumberEncrypted = ''
+            userChanged = true
+        }
+
+        if (typeof user.phoneNumberLast4 !== 'string') {
+            user.phoneNumberLast4 = ''
+            userChanged = true
+        }
+
+        if (typeof user.phoneVerified !== 'boolean') {
+            user.phoneVerified = user.role === 'admin'
+            userChanged = true
+        }
+
+        if (!Object.hasOwn(user, 'phoneVerifiedAt')) {
+            user.phoneVerifiedAt = user.phoneVerified ? new Date().toISOString() : null
+            userChanged = true
+        }
+
+        if (!user.phoneVerification || typeof user.phoneVerification !== 'object') {
+            user.phoneVerification = {
+                codeHash: '',
+                attempts: 0,
+                requestedAt: null,
+                expiresAt: null
+            }
+            userChanged = true
+        } else {
+            if (typeof user.phoneVerification.codeHash !== 'string') {
+                user.phoneVerification.codeHash = ''
+                userChanged = true
+            }
+
+            if (typeof user.phoneVerification.attempts !== 'number') {
+                user.phoneVerification.attempts = 0
+                userChanged = true
+            }
+
+            if (!Object.hasOwn(user.phoneVerification, 'requestedAt')) {
+                user.phoneVerification.requestedAt = null
+                userChanged = true
+            }
+
+            if (!Object.hasOwn(user.phoneVerification, 'expiresAt')) {
+                user.phoneVerification.expiresAt = null
+                userChanged = true
+            }
+        }
+
+        if (user.role === 'admin' && !user.phoneVerified) {
+            user.phoneVerified = true
+            user.phoneVerifiedAt = user.phoneVerifiedAt || new Date().toISOString()
+            user.phoneVerification = {
+                codeHash: '',
+                attempts: 0,
+                requestedAt: null,
+                expiresAt: null
+            }
+            userChanged = true
+        }
+
+        if (userChanged) {
+            user.updatedAt = new Date().toISOString()
             hasChanges = true
         }
     }

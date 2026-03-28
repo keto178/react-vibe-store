@@ -167,6 +167,20 @@ export function fetchCurrentUserApi() {
     return apiRequest('/auth/me')
 }
 
+export function requestPhoneVerificationCodeApi(payload) {
+    return apiRequest('/auth/phone/request-code', {
+        method: 'POST',
+        body: payload
+    })
+}
+
+export function verifyPhoneVerificationCodeApi(payload) {
+    return apiRequest('/auth/phone/verify-code', {
+        method: 'POST',
+        body: payload
+    })
+}
+
 export function fetchCategoriesApi() {
     return apiRequest('/categories')
 }

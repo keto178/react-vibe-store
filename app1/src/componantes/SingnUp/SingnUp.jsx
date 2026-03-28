@@ -17,6 +17,14 @@ const EMPTY_SIGNUP_FORM = {
     confirmPassword: ''
 }
 
+function resolvePostAuthRoute(sessionUser) {
+    if (sessionUser?.requiresPhoneVerification) {
+        return '/VerifyPhone'
+    }
+
+    return isDashboardOwner(sessionUser) ? '/Dashboard' : '/Home'
+}
+
 export default function SingnUp({ initialMode = 'login' }) {
     const navigate = useNavigate()
     const activeSession = useActiveSession()
@@ -43,7 +51,7 @@ export default function SingnUp({ initialMode = 'login' }) {
             return
         }
 
-        navigate(isDashboardOwner(activeSession) ? '/Dashboard' : '/Home', {
+        navigate(resolvePostAuthRoute(activeSession), {
             replace: true
         })
     }, [activeSession, navigate])
@@ -112,7 +120,7 @@ export default function SingnUp({ initialMode = 'login' }) {
                 type: 'success',
                 text: `Account created successfully. Welcome, ${authResponse.user.username}.`
             })
-            navigate('/Home')
+            navigate(resolvePostAuthRoute(authResponse.user))
         } catch (error) {
             console.error('[auth/register] Request failed.', {
                 email,
@@ -154,7 +162,7 @@ export default function SingnUp({ initialMode = 'login' }) {
                     : `Welcome back, ${authResponse.user.username}.`
             })
             setLoginForm(EMPTY_LOGIN_FORM)
-            navigate(isDashboardOwner(authResponse.user) ? '/Dashboard' : '/Home')
+            navigate(resolvePostAuthRoute(authResponse.user))
         } catch (error) {
             console.error('[auth/login] Request failed.', {
                 email,

@@ -5,11 +5,11 @@ import {
     removeCartItem,
     updateCartItem
 } from '../controllers/cartController.js'
-import { authenticate } from '../middleware/auth.js'
+import { authenticate, requirePhoneVerified } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.use(authenticate)
+router.use(authenticate, requirePhoneVerified)
 
 router.get('/', getCart)
 router.post('/items', addCartItem)

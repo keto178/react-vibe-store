@@ -57,8 +57,10 @@ export function useAppStore(activeSession) {
     const sessionId = activeSession?.id || ''
     const sessionRole = activeSession?.role || ''
     const hasSession = Boolean(sessionId)
+    const requiresPhoneVerification = Boolean(activeSession?.requiresPhoneVerification)
     const isFallbackSession = activeSession?.authMode === 'fallback'
     const offlineFeatureMessage = 'Backend is not running. Start the API server to use this feature.'
+    const phoneVerificationRequiredMessage = 'Verify your phone number to continue.'
 
     const refreshCatalog = async () => {
         const [categoriesResponse, productsResponse] = await Promise.all([
@@ -73,6 +75,11 @@ export function useAppStore(activeSession) {
     const refreshCart = async () => {
         if (!activeSession) {
             setCartItems(readGuestCartItems())
+            return
+        }
+
+        if (requiresPhoneVerification) {
+            setCartItems([])
             return
         }
 
@@ -94,7 +101,7 @@ export function useAppStore(activeSession) {
                     fetchCategoriesApi(),
                     fetchProductsApi()
                 ])
-                const shouldLoadSessionData = !isFallbackSession && hasSession
+                const shouldLoadSessionData = !isFallbackSession && hasSession && !requiresPhoneVerification
 
                 if (shouldLoadSessionData) {
                     const guestCartItems = readGuestCartItems()
@@ -153,6 +160,12 @@ export function useAppStore(activeSession) {
                     return
                 }
 
+                if (requiresPhoneVerification) {
+                    setCartItems([])
+                    setOrders([])
+                    return
+                }
+
                 setCartItems(ensureArray(cartResponse?.items))
                 setOrders(ensureArray(ordersResponse?.orders))
             } catch (error) {
@@ -165,6 +178,11 @@ export function useAppStore(activeSession) {
                     setOrders([])
                 }
 
+                if (requiresPhoneVerification) {
+                    setCartItems([])
+                    setOrders([])
+                }
+
                 logStoreError(error)
             }
         }
@@ -174,7 +192,7 @@ export function useAppStore(activeSession) {
         return () => {
             isCancelled = true
         }
-    }, [hasSession, isFallbackSession, sessionId, sessionRole])
+    }, [hasSession, isFallbackSession, requiresPhoneVerification, sessionId, sessionRole])
 
     const handleAddProduct = async (product) => {
         if (isFallbackSession) {
@@ -279,6 +297,13 @@ export function useAppStore(activeSession) {
             }
         }
 
+        if (requiresPhoneVerification) {
+            return {
+                ok: false,
+                message: phoneVerificationRequiredMessage
+            }
+        }
+
         if (isFallbackSession) {
             return {
                 ok: false,
@@ -316,6 +341,10 @@ export function useAppStore(activeSession) {
             return
         }
 
+        if (requiresPhoneVerification) {
+            return
+        }
+
         if (isFallbackSession) {
             return
         }
@@ -341,6 +370,10 @@ export function useAppStore(activeSession) {
             return
         }
 
+        if (requiresPhoneVerification) {
+            return
+        }
+
         if (isFallbackSession) {
             return
         }
@@ -358,6 +391,13 @@ export function useAppStore(activeSession) {
             return {
                 ok: false,
                 message: 'Please log in before placing an order.'
+            }
+        }
+
+        if (requiresPhoneVerification) {
+            return {
+                ok: false,
+                message: phoneVerificationRequiredMessage
             }
         }
 
@@ -392,6 +432,10 @@ export function useAppStore(activeSession) {
             return
         }
 
+        if (requiresPhoneVerification) {
+            return
+        }
+
         if (isFallbackSession) {
             return
         }
@@ -409,6 +453,13 @@ export function useAppStore(activeSession) {
             return {
                 ok: false,
                 message: 'Only admins can update order status.'
+            }
+        }
+
+        if (requiresPhoneVerification) {
+            return {
+                ok: false,
+                message: phoneVerificationRequiredMessage
             }
         }
 
@@ -445,6 +496,13 @@ export function useAppStore(activeSession) {
             return {
                 ok: false,
                 message: 'Only admins can remove orders.'
+            }
+        }
+
+        if (requiresPhoneVerification) {
+            return {
+                ok: false,
+                message: phoneVerificationRequiredMessage
             }
         }
 

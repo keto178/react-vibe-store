@@ -19,7 +19,17 @@ export async function seedDefaults() {
             username: normalizedAdminUsername,
             email: normalizedAdminEmail,
             passwordHash,
-            role: 'admin'
+            role: 'admin',
+            phoneVerified: true,
+            phoneVerifiedAt: new Date(),
+            phoneNumberEncrypted: '',
+            phoneNumberLast4: '',
+            phoneVerification: {
+                codeHash: '',
+                attempts: 0,
+                requestedAt: null,
+                expiresAt: null
+            }
         })
     } else {
         const passwordMatches = await bcrypt.compare(env.adminPassword, existingAdmin.passwordHash)
@@ -40,6 +50,16 @@ export async function seedDefaults() {
         existingAdmin.username = normalizedAdminUsername
         existingAdmin.email = normalizedAdminEmail
         existingAdmin.role = 'admin'
+        existingAdmin.phoneVerified = true
+        existingAdmin.phoneVerifiedAt = existingAdmin.phoneVerifiedAt || new Date()
+        existingAdmin.phoneNumberEncrypted = existingAdmin.phoneNumberEncrypted || ''
+        existingAdmin.phoneNumberLast4 = existingAdmin.phoneNumberLast4 || ''
+        existingAdmin.phoneVerification = {
+            codeHash: '',
+            attempts: 0,
+            requestedAt: null,
+            expiresAt: null
+        }
 
         await existingAdmin.save()
     }

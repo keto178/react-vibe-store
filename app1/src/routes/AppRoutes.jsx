@@ -8,6 +8,7 @@ const Dashboard = lazy(() => import('../Pages/Dashboard/Dashboard'))
 const PlecOurder = lazy(() => import('../Pages/PlecOurder/PlecOurder'))
 const ShippingInformation = lazy(() => import('../Pages/ShippingInformation/ShippingInformation'))
 const Orders = lazy(() => import('../Pages/Orders/Orders'))
+const PhoneVerification = lazy(() => import('../Pages/PhoneVerification/PhoneVerification'))
 
 export default function AppRoutes({
     activeSession,
@@ -78,13 +79,23 @@ export default function AppRoutes({
                 <Route
                     path="/Orders"
                     element={
-                        <Orders
-                            activeSession={activeSession}
-                            orders={orders}
-                            onMarkOrdersAsSeen={onMarkOrdersAsSeen}
-                            onUpdateOrderStatus={onUpdateOrderStatus}
-                            onDeleteOrder={onDeleteOrder}
-                        />
+                        <ProtectedRoute activeSession={activeSession}>
+                            <Orders
+                                activeSession={activeSession}
+                                orders={orders}
+                                onMarkOrdersAsSeen={onMarkOrdersAsSeen}
+                                onUpdateOrderStatus={onUpdateOrderStatus}
+                                onDeleteOrder={onDeleteOrder}
+                            />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/VerifyPhone"
+                    element={
+                        <ProtectedRoute activeSession={activeSession} requirePhoneVerificationComplete={false}>
+                            <PhoneVerification activeSession={activeSession} />
+                        </ProtectedRoute>
                     }
                 />
                 <Route path="/Login" element={<SingnUp initialMode="login" />} />

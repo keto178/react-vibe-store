@@ -47,3 +47,18 @@ export function requireAdmin(req, res, next) {
 
     next()
 }
+
+export function requirePhoneVerified(req, res, next) {
+    if (req.user?.role === 'admin') {
+        next()
+        return
+    }
+
+    if (req.user?.phoneVerified) {
+        next()
+        return
+    }
+
+    res.status(403)
+    throw new Error('Phone verification is required to continue.')
+}

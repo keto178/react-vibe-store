@@ -1,3 +1,5 @@
+import { maskPhoneNumber } from './phoneVerification.js'
+
 function toId(value) {
     if (!value) {
         return ''
@@ -33,11 +35,18 @@ function sanitizeNicotineLevels(levels, productType) {
 }
 
 export function serializeUser(user) {
+    const isPhoneVerified = user?.role === 'admin'
+        ? true
+        : Boolean(user?.phoneVerified)
+
     return {
-        id: toId(user?._id),
+        id: toId(user?._id || user?.id),
         username: user?.username || '',
         email: user?.email || '',
-        role: user?.role || 'user'
+        role: user?.role || 'user',
+        phoneMasked: maskPhoneNumber(user?.phoneNumberLast4 || ''),
+        isPhoneVerified,
+        requiresPhoneVerification: user?.role === 'admin' ? false : !isPhoneVerified
     }
 }
 

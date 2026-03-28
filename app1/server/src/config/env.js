@@ -25,7 +25,11 @@ const env = {
     smtpSecure: process.env.SMTP_SECURE === 'true',
     smtpUser: process.env.SMTP_USER || '',
     smtpPass: process.env.SMTP_PASS || '',
-    smtpFrom: process.env.SMTP_FROM || 'Store Notifications <no-reply@example.com>'
+    smtpFrom: process.env.SMTP_FROM || 'Store Notifications <no-reply@example.com>',
+    phoneDataSecret: process.env.PHONE_DATA_SECRET || process.env.JWT_SECRET || '',
+    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
+    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
+    twilioFromNumber: process.env.TWILIO_FROM_NUMBER || ''
 }
 
 export function getConfigDiagnostics() {
@@ -44,6 +48,14 @@ export function getConfigDiagnostics() {
 
     if (isProduction && !process.env.CLIENT_ORIGIN) {
         warnings.push('CLIENT_ORIGIN is not set. CORS may block custom domains.')
+    }
+
+    if (!process.env.PHONE_DATA_SECRET) {
+        warnings.push('PHONE_DATA_SECRET is not set. Falling back to JWT_SECRET for phone encryption.')
+    }
+
+    if (isProduction && (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioFromNumber)) {
+        warnings.push('Twilio SMS settings are incomplete. OTP delivery will use preview mode instead of SMS.')
     }
 
     return {

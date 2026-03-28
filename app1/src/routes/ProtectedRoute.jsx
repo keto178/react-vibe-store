@@ -2,9 +2,18 @@ import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { isDashboardOwner } from '../utils/auth'
 
-export default function ProtectedRoute({ children, activeSession, requireAdmin = false }) {
+export default function ProtectedRoute({
+    children,
+    activeSession,
+    requireAdmin = false,
+    requirePhoneVerificationComplete = true
+}) {
     if (!activeSession) {
         return <Navigate to="/Login" replace />
+    }
+
+    if (requirePhoneVerificationComplete && activeSession.requiresPhoneVerification) {
+        return <Navigate to="/VerifyPhone" replace />
     }
 
     if (requireAdmin && !isDashboardOwner(activeSession)) {
