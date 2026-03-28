@@ -218,6 +218,10 @@ export function fetchCurrentUserApi() {
     return apiRequest('/auth/me')
 }
 
+export function fetchApiHealthApi() {
+    return apiRequest('/health')
+}
+
 export function requestPhoneVerificationCodeApi(payload) {
     return apiRequest('/auth/phone/request-code', {
         method: 'POST',

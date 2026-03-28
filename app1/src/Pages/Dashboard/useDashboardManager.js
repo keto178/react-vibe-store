@@ -13,6 +13,7 @@ import {
 
 export function useDashboardManager({
     activeSession,
+    serverHealth,
     categories = [],
     products = [],
     onAddCategory,
@@ -38,8 +39,14 @@ export function useDashboardManager({
     const productSectionRef = useRef(null)
     const isEditingCategory = editingCategoryId !== null
     const isEditingProduct = editingProductId !== null
+    const readOnlyMessage = serverHealth?.writeAccess === false ? serverHealth.message || 'Saving is disabled right now.' : ''
+    const isReadOnly = Boolean(readOnlyMessage)
 
     const uploadSelectedFile = async (file, scope) => {
+        if (isReadOnly) {
+            throw new Error(readOnlyMessage)
+        }
+
         const dataUrl = await readFileAsDataUrl(file)
         const response = await uploadAssetApi({
             dataUrl,
@@ -217,6 +224,11 @@ export function useDashboardManager({
     }
 
     const handleDeleteCategoryItem = async (categoryId, categoryName) => {
+        if (isReadOnly) {
+            setCategoryStatus({ type: 'error', text: readOnlyMessage })
+            return
+        }
+
         try {
             await onDeleteCategory(categoryId)
 
@@ -232,6 +244,11 @@ export function useDashboardManager({
 
     const handleCategorySubmit = async (event) => {
         event.preventDefault()
+
+        if (isReadOnly) {
+            setCategoryStatus({ type: 'error', text: readOnlyMessage })
+            return
+        }
 
         if (!categoryForm.name.trim()) {
             setCategoryStatus({ type: 'error', text: 'Please enter a category name.' })
@@ -300,6 +317,11 @@ export function useDashboardManager({
     }
 
     const handleDeleteProductItem = async (productId, productName) => {
+        if (isReadOnly) {
+            setProductStatus({ type: 'error', text: readOnlyMessage })
+            return
+        }
+
         try {
             await onDeleteProduct(productId)
 
@@ -315,6 +337,11 @@ export function useDashboardManager({
 
     const handleProductSubmit = async (event) => {
         event.preventDefault()
+
+        if (isReadOnly) {
+            setProductStatus({ type: 'error', text: readOnlyMessage })
+            return
+        }
 
         if (!productForm.name.trim() || !productForm.description.trim()) {
             setProductStatus({ type: 'error', text: 'Please enter the product name and description.' })
@@ -405,6 +432,9 @@ export function useDashboardManager({
         handleLogout,
         categoryCount: categories.length,
         productCount: products.length,
+        serverHealth,
+        isReadOnly,
+        readOnlyMessage,
         categorySectionProps: {
             categories,
             sectionRef: categorySectionRef,
@@ -412,6 +442,8 @@ export function useDashboardManager({
             status: categoryStatus,
             isSaving: isSavingCategory,
             isEditing: isEditingCategory,
+            isReadOnly,
+            readOnlyMessage,
             imageInputRef: categoryImageInputRef,
             onFieldChange: handleCategoryChange,
             onImageChange: handleCategoryImageChange,
@@ -427,6 +459,8 @@ export function useDashboardManager({
             status: productStatus,
             isSaving: isSavingProduct,
             isEditing: isEditingProduct,
+            isReadOnly,
+            readOnlyMessage,
             imageInputRef: productImageInputRef,
             onFieldChange: handleProductChange,
             onColorInputChange: handleProductColorInputChange,
@@ -439,6 +473,8 @@ export function useDashboardManager({
         },
         productListProps: {
             products,
+            isReadOnly,
+            readOnlyMessage,
             onEdit: handleEditProduct,
             onDelete: handleDeleteProductItem
         }

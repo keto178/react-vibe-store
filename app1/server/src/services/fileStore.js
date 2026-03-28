@@ -5,7 +5,9 @@ import env from '../config/env.js'
 import { maskPhoneNumber } from '../utils/phoneVerification.js'
 
 const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
-const DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
+const LEGACY_DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
+const RUNTIME_DATA_FILE_URL = new URL('../../data/runtime-store.json', import.meta.url)
+const SEED_DATA_FILE_URL = new URL('../../data/default-store.json', import.meta.url)
 const MEMORY_STORE_KEY = '__APP1_SERVER_MEMORY_STORE__'
 const isServerlessDeployment = process.env.VERCEL === '1'
 const DEFAULT_ADMIN_USER_ID = 'usr-admin-default'
@@ -36,13 +38,33 @@ function cloneStore(store) {
     return JSON.parse(JSON.stringify(normalizeStoreShape(store)))
 }
 
-async function loadBundledStore() {
+async function readStoreFile(fileUrl) {
     try {
-        const fileContents = await readFile(DATA_FILE_URL, 'utf8')
+        const fileContents = await readFile(fileUrl, 'utf8')
         return normalizeStoreShape(JSON.parse(fileContents))
     } catch {
-        return cloneEmptyStore()
+        return null
     }
+}
+
+async function loadSeedStore() {
+    return readStoreFile(SEED_DATA_FILE_URL)
+}
+
+async function loadBundledStore() {
+    return (
+        await loadSeedStore() ||
+        cloneEmptyStore()
+    )
+}
+
+async function loadInitialLocalStore() {
+    return (
+        await readStoreFile(RUNTIME_DATA_FILE_URL) ||
+        await readStoreFile(LEGACY_DATA_FILE_URL) ||
+        await loadSeedStore() ||
+        cloneEmptyStore()
+    )
 }
 
 async function getMemoryStore() {
@@ -57,6 +79,10 @@ export function getFileStorageMode() {
     return isServerlessDeployment ? 'memory' : 'file'
 }
 
+export function getFileCatalogSource() {
+    return isServerlessDeployment ? 'bundled-seed' : 'local-runtime'
+}
+
 export function createId(prefix = '') {
     return prefix ? `${prefix}-${randomUUID()}` : randomUUID()
 }
@@ -68,14 +94,15 @@ export async function readStore() {
 
     await mkdir(DATA_DIRECTORY_URL, { recursive: true })
 
-    try {
-        const fileContents = await readFile(DATA_FILE_URL, 'utf8')
-        return normalizeStoreShape(JSON.parse(fileContents))
-    } catch {
-        const store = cloneEmptyStore()
-        await writeStore(store)
-        return store
+    const runtimeStore = await readStoreFile(RUNTIME_DATA_FILE_URL)
+
+    if (runtimeStore) {
+        return runtimeStore
     }
+
+    const initialStore = await loadInitialLocalStore()
+    await writeStore(initialStore)
+    return initialStore
 }
 
 export async function writeStore(store) {
@@ -85,7 +112,7 @@ export async function writeStore(store) {
     }
 
     await mkdir(DATA_DIRECTORY_URL, { recursive: true })
-    await writeFile(DATA_FILE_URL, JSON.stringify(normalizeStoreShape(store), null, 2), 'utf8')
+    await writeFile(RUNTIME_DATA_FILE_URL, JSON.stringify(normalizeStoreShape(store), null, 2), 'utf8')
 }
 
 export function sanitizeUser(user) {

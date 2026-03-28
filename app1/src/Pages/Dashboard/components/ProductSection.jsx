@@ -25,6 +25,8 @@ export default function ProductSection({
     status = EMPTY_STATUS,
     isSaving,
     isEditing,
+    isReadOnly = false,
+    readOnlyMessage = '',
     imageInputRef,
     onFieldChange,
     onColorInputChange,
@@ -58,6 +60,7 @@ export default function ProductSection({
                             value={form.name}
                             onChange={onFieldChange}
                             placeholder='Enter product name'
+                            disabled={isReadOnly}
                             required
                         />
                     </label>
@@ -68,6 +71,7 @@ export default function ProductSection({
                             name="categoryId"
                             value={form.categoryId}
                             onChange={onFieldChange}
+                            disabled={isReadOnly}
                             required
                         >
                             {categories.map((category) => (
@@ -86,6 +90,7 @@ export default function ProductSection({
                             onChange={onFieldChange}
                             placeholder='Enter product description'
                             rows="5"
+                            disabled={isReadOnly}
                             required
                         />
                     </label>
@@ -100,6 +105,7 @@ export default function ProductSection({
                             placeholder="0.00"
                             min="0"
                             step="0.01"
+                            disabled={isReadOnly}
                             required
                         />
                     </label>
@@ -114,6 +120,7 @@ export default function ProductSection({
                             placeholder="0"
                             min="0"
                             step="1"
+                            disabled={isReadOnly}
                         />
                     </label>
 
@@ -126,6 +133,7 @@ export default function ProductSection({
                                     name="colorInput"
                                     value={form.colorInput}
                                     onChange={onColorInputChange}
+                                    disabled={isReadOnly}
                                 />
                                 <strong>{form.colorInput}</strong>
                             </div>
@@ -133,6 +141,7 @@ export default function ProductSection({
                                 type="button"
                                 className='dashboard-add-color'
                                 onClick={onAddColor}
+                                disabled={isReadOnly}
                             >
                                 Add Color
                             </button>
@@ -145,6 +154,7 @@ export default function ProductSection({
                                     className='dashboard-color-tag'
                                     onClick={() => onRemoveColor(color)}
                                     title="Remove color"
+                                    disabled={isReadOnly}
                                 >
                                     <span
                                         className='dashboard-color-dot'
@@ -172,7 +182,7 @@ export default function ProductSection({
                                             type="button"
                                             className={`dashboard-nicotine-tag ${isSelected ? 'active' : ''}`}
                                             onClick={() => onToggleNicotineLevel(level)}
-                                            disabled={!isSelected && hasReachedLimit}
+                                            disabled={isReadOnly || (!isSelected && hasReachedLimit)}
                                         >
                                             {formatNicotineLevel(level)}
                                         </button>
@@ -192,10 +202,14 @@ export default function ProductSection({
                             type="file"
                             accept="image/*"
                             onChange={onImageChange}
+                            disabled={isReadOnly}
                             required={!isEditing}
                         />
                         {isEditing && form.existingImage && (
                             <small className='dashboard-field-hint'>Leave this empty to keep the current product image.</small>
+                        )}
+                        {isReadOnly && readOnlyMessage && (
+                            <small className='dashboard-field-hint'>{readOnlyMessage}</small>
                         )}
                     </label>
 
@@ -206,11 +220,11 @@ export default function ProductSection({
                     )}
 
                     <div className='dashboard-form-actions'>
-                        <button type="submit" className='dashboard-save' disabled={isSaving}>
-                            {isSaving ? 'Saving...' : isEditing ? 'Update Product' : 'Add Product'}
+                        <button type="submit" className='dashboard-save' disabled={isSaving || isReadOnly}>
+                            {isReadOnly ? 'Read Only' : isSaving ? 'Saving...' : isEditing ? 'Update Product' : 'Add Product'}
                         </button>
                         {isEditing && (
-                            <button type="button" className='dashboard-cancel' onClick={() => onReset()}>
+                            <button type="button" className='dashboard-cancel' onClick={() => onReset()} disabled={isReadOnly}>
                                 Cancel Edit
                             </button>
                         )}

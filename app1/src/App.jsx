@@ -3,6 +3,7 @@ import './App.css'
 import Navpar from './componantes/NavPar/NavPar'
 import Footer from './componantes/Footer/Footer'
 import { saveActiveSession } from './utils/auth'
+import { shouldShowServerStatusBanner } from './utils/serverHealth'
 import AppRoutes from './routes/AppRoutes'
 import { useAppStore } from './hooks/useAppStore'
 import { useActiveSession } from './hooks/useActiveSession'
@@ -19,6 +20,7 @@ function App() {
     orders,
     isCatalogLoading,
     catalogError,
+    serverHealth,
     cartCount,
     unreadOrdersCount,
     handleAddProduct,
@@ -39,7 +41,7 @@ function App() {
   useEffect(() => {
     let isCancelled = false
 
-    if (!sessionToken || sessionAuthMode === 'fallback') {
+    if (!sessionToken) {
       return undefined
     }
 
@@ -83,6 +85,14 @@ function App() {
         cartCount={cartCount}
         unreadOrdersCount={unreadOrdersCount}
       />
+      {shouldShowServerStatusBanner(serverHealth) && (
+        <div className={`app-status-banner ${serverHealth.writeAccess === false ? 'warning' : 'info'}`} role="status">
+          <strong>
+            {serverHealth.writeAccess === false ? 'Saving is disabled on this deployment.' : 'Local fallback storage is active.'}
+          </strong>
+          <span>{serverHealth.message}</span>
+        </div>
+      )}
       <main className="app-content">
         <AppRoutes
           activeSession={activeSession}
@@ -90,6 +100,7 @@ function App() {
           products={products}
           isCatalogLoading={isCatalogLoading}
           catalogError={catalogError}
+          serverHealth={serverHealth}
           cartItems={cartItems}
           orders={orders}
           onAddToCart={handleAddToCart}

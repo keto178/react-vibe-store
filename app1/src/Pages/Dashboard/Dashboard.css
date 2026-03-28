@@ -53,10 +53,48 @@
     font-size: 1.02rem;
 }
 
+.dashboard-runtime-copy {
+    margin-top: 8px;
+    color: #bfd5ea;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .dashboard-form-summary {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+}
+
+.dashboard-runtime-banner {
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dashboard-runtime-banner strong {
+    color: inherit;
+    font-size: 0.96rem;
+}
+
+.dashboard-runtime-banner span {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.dashboard-runtime-banner.info {
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(125, 178, 255, 0.24);
+    color: #d7ebff;
+}
+
+.dashboard-runtime-banner.warning {
+    background: rgba(249, 115, 22, 0.14);
+    border-color: rgba(251, 191, 36, 0.26);
+    color: #ffe8c2;
 }
 
 .dashboard-summary-card {
@@ -330,8 +368,17 @@
 }
 
 .dashboard-save:disabled {
-    cursor: wait;
+    cursor: not-allowed;
     opacity: 0.72;
+}
+
+.dashboard-add-color:disabled,
+.dashboard-card-btn:disabled,
+.dashboard-cancel:disabled,
+.dashboard-color-tag:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    transform: none;
 }
 
 .dashboard-cancel {

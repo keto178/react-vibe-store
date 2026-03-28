@@ -2,7 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import env from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
-import { getExternalStorageMode } from './services/externalStorageService.js'
+import { buildMongoRuntimeHealth } from './services/runtimeHealth.js'
 import authRoutes from './routes/authRoutes.js'
 import cartRoutes from './routes/cartRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
@@ -48,11 +48,7 @@ app.use('/api', (req, res, next) => {
 })
 
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        storage: 'mongodb',
-        fileStorage: getExternalStorageMode()
-    })
+    res.json(buildMongoRuntimeHealth())
 })
 
 app.use('/api/auth', authRoutes)

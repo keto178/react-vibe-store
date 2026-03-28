@@ -1,13 +1,22 @@
 import React from 'react'
 import Card from '../../Card/Card'
 
-export default function ProductListSection({ products = [], onEdit, onDelete }) {
+export default function ProductListSection({
+    products = [],
+    isReadOnly = false,
+    readOnlyMessage = '',
+    onEdit,
+    onDelete
+}) {
     return (
         <section className='dashboard-products'>
             <div className='dashboard-products-header'>
                 <div>
                     <p className='dashboard-badge'>Product List</p>
                     <h2>Manage your saved products</h2>
+                    {isReadOnly && readOnlyMessage && (
+                        <p className='dashboard-runtime-copy'>{readOnlyMessage}</p>
+                    )}
                 </div>
                 <span className='dashboard-products-count'>{products.length} items</span>
             </div>
@@ -24,6 +33,7 @@ export default function ProductListSection({ products = [], onEdit, onDelete }) 
                                     <button
                                         type="button"
                                         className='dashboard-card-btn edit'
+                                        disabled={isReadOnly}
                                         onClick={() => onEdit(product)}
                                     >
                                         Edit
@@ -31,6 +41,7 @@ export default function ProductListSection({ products = [], onEdit, onDelete }) 
                                     <button
                                         type="button"
                                         className='dashboard-card-btn delete'
+                                        disabled={isReadOnly}
                                         onClick={() => onDelete(product.id, product.name)}
                                     >
                                         Delete

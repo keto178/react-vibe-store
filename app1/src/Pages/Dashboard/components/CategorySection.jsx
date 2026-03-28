@@ -18,6 +18,8 @@ export default function CategorySection({
     status = EMPTY_STATUS,
     isSaving,
     isEditing,
+    isReadOnly = false,
+    readOnlyMessage = '',
     imageInputRef,
     onFieldChange,
     onImageChange,
@@ -45,13 +47,14 @@ export default function CategorySection({
                         value={form.name}
                         onChange={onFieldChange}
                         placeholder='e.g. Dessert'
+                        disabled={isReadOnly}
                         required
                     />
                 </label>
 
                 <label className='dashboard-field'>
                     <span>List Type</span>
-                    <select name="group" value={form.group} onChange={onFieldChange}>
+                    <select name="group" value={form.group} onChange={onFieldChange} disabled={isReadOnly}>
                         <option value="Device">Device</option>
                         <option value="Liquid">Liquid</option>
                     </select>
@@ -64,10 +67,14 @@ export default function CategorySection({
                         type="file"
                         accept="image/*"
                         onChange={onImageChange}
+                        disabled={isReadOnly}
                         required={!isEditing}
                     />
                     {isEditing && form.existingImage && (
                         <small className='dashboard-field-hint'>Leave this empty to keep the current category image.</small>
+                    )}
+                    {isReadOnly && readOnlyMessage && (
+                        <small className='dashboard-field-hint'>{readOnlyMessage}</small>
                     )}
                 </label>
 
@@ -78,11 +85,11 @@ export default function CategorySection({
                 )}
 
                 <div className='dashboard-form-actions'>
-                    <button type="submit" className='dashboard-save' disabled={isSaving}>
-                        {isSaving ? 'Saving...' : isEditing ? 'Update Category' : 'Add Category'}
+                    <button type="submit" className='dashboard-save' disabled={isSaving || isReadOnly}>
+                        {isReadOnly ? 'Read Only' : isSaving ? 'Saving...' : isEditing ? 'Update Category' : 'Add Category'}
                     </button>
                     {isEditing && (
-                        <button type="button" className='dashboard-cancel' onClick={onReset}>
+                        <button type="button" className='dashboard-cancel' onClick={onReset} disabled={isReadOnly}>
                             Cancel Edit
                         </button>
                     )}
@@ -108,6 +115,7 @@ export default function CategorySection({
                                 <button
                                     type="button"
                                     className='dashboard-card-btn edit'
+                                    disabled={isReadOnly}
                                     onClick={() => onEdit(category)}
                                 >
                                     Edit
@@ -115,6 +123,7 @@ export default function CategorySection({
                                 <button
                                     type="button"
                                     className='dashboard-card-btn delete'
+                                    disabled={isReadOnly}
                                     onClick={() => onDelete(category.id, category.name)}
                                 >
                                     Delete

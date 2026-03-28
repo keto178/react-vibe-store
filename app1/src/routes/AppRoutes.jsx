@@ -16,6 +16,7 @@ export default function AppRoutes({
     products = [],
     isCatalogLoading = false,
     catalogError = '',
+    serverHealth,
     cartItems = [],
     orders = [],
     onAddToCart,
@@ -130,6 +131,7 @@ export default function AppRoutes({
                         <ProtectedRoute activeSession={activeSession} requireAdmin>
                             <Dashboard
                                 activeSession={activeSession}
+                                serverHealth={serverHealth}
                                 categories={categories}
                                 products={products}
                                 onAddCategory={onAddCategory}

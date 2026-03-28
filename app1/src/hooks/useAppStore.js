@@ -9,6 +9,7 @@ import {
     deleteOrderApi,
     deleteProductApi,
     fetchAdminOrdersApi,
+    fetchApiHealthApi,
     fetchCartApi,
     fetchCategoriesApi,
     fetchProductsApi,
@@ -28,6 +29,11 @@ import {
     saveGuestCartItems,
     updateGuestCartItemQuantity
 } from '../utils/guestCart'
+import {
+    DEFAULT_SERVER_HEALTH,
+    getWriteAccessMessage,
+    normalizeServerHealth
+} from '../utils/serverHealth'
 
 function ensureArray(value) {
     return Array.isArray(value) ? value : []
@@ -54,16 +60,14 @@ export function useAppStore(activeSession) {
     const [orders, setOrders] = useState([])
     const [isCatalogLoading, setIsCatalogLoading] = useState(true)
     const [catalogError, setCatalogError] = useState('')
+    const [serverHealth, setServerHealth] = useState(DEFAULT_SERVER_HEALTH)
 
     const isAdmin = isDashboardOwner(activeSession)
     const sessionId = activeSession?.id || ''
     const sessionRole = activeSession?.role || ''
     const hasSession = Boolean(sessionId)
     const requiresPhoneVerification = Boolean(activeSession?.requiresPhoneVerification)
-    const isFallbackSession = activeSession?.authMode === 'fallback'
-    const offlineFeatureMessage = (
-        'Saving is temporarily disabled because the server is running in fallback mode. Reconnect MongoDB to persist changes.'
-    )
+    const offlineFeatureMessage = getWriteAccessMessage(serverHealth)
     const phoneVerificationRequiredMessage = 'Verify your phone number to continue.'
 
     const refreshCatalog = async () => {
@@ -87,11 +91,6 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (isFallbackSession) {
-            setCartItems([])
-            return
-        }
-
         const response = await fetchCartApi()
         setCartItems(ensureArray(response?.items))
     }
@@ -104,11 +103,17 @@ export function useAppStore(activeSession) {
             setCatalogError('')
 
             try {
-                const catalogPromise = Promise.all([
-                    fetchCategoriesApi(),
-                    fetchProductsApi()
+                const [healthResult, catalogResult] = await Promise.allSettled([
+                    fetchApiHealthApi(),
+                    Promise.all([
+                        fetchCategoriesApi(),
+                        fetchProductsApi()
+                    ])
                 ])
-                const shouldLoadSessionData = !isFallbackSession && hasSession && !requiresPhoneVerification
+                const nextServerHealth = healthResult.status === 'fulfilled'
+                    ? normalizeServerHealth(healthResult.value)
+                    : DEFAULT_SERVER_HEALTH
+                const shouldLoadSessionData = hasSession && !requiresPhoneVerification
 
                 if (shouldLoadSessionData) {
                     const guestCartItems = readGuestCartItems()
@@ -137,6 +142,10 @@ export function useAppStore(activeSession) {
                     }
                 }
 
+                if (catalogResult.status === 'rejected') {
+                    throw catalogResult.reason
+                }
+
                 const sessionDataPromise = shouldLoadSessionData
                     ? Promise.all([
                         fetchCartApi(),
@@ -144,7 +153,7 @@ export function useAppStore(activeSession) {
                     ])
                     : Promise.resolve([null, null])
                 const [[categoriesResponse, productsResponse], [cartResponse, ordersResponse]] = await Promise.all([
-                    catalogPromise,
+                    Promise.resolve(catalogResult.value),
                     sessionDataPromise
                 ])
 
@@ -152,16 +161,11 @@ export function useAppStore(activeSession) {
                     return
                 }
 
+                setServerHealth(nextServerHealth)
                 setCategories(ensureArray(categoriesResponse?.categories))
                 setProducts(ensureArray(productsResponse?.products))
                 setCatalogError('')
                 setIsCatalogLoading(false)
-
-                if (isFallbackSession) {
-                    setCartItems([])
-                    setOrders([])
-                    return
-                }
 
                 if (!hasSession) {
                     setCartItems(readGuestCartItems())
@@ -178,6 +182,21 @@ export function useAppStore(activeSession) {
                 setCartItems(ensureArray(cartResponse?.items))
                 setOrders(ensureArray(ordersResponse?.orders))
             } catch (error) {
+                if (isCancelled) {
+                    return
+                }
+
+                try {
+                    const healthResponse = await fetchApiHealthApi()
+                    if (!isCancelled) {
+                        setServerHealth(normalizeServerHealth(healthResponse))
+                    }
+                } catch {
+                    if (!isCancelled) {
+                        setServerHealth(DEFAULT_SERVER_HEALTH)
+                    }
+                }
+
                 if (isCancelled) {
                     return
                 }
@@ -204,10 +223,10 @@ export function useAppStore(activeSession) {
         return () => {
             isCancelled = true
         }
-    }, [hasSession, isFallbackSession, requiresPhoneVerification, sessionId, sessionRole])
+    }, [hasSession, requiresPhoneVerification, sessionId, sessionRole])
 
     const handleAddProduct = async (product) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -220,7 +239,7 @@ export function useAppStore(activeSession) {
     }
 
     const handleUpdateProduct = async (updatedProduct) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -241,7 +260,7 @@ export function useAppStore(activeSession) {
     }
 
     const handleDeleteProduct = async (productId) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -257,7 +276,7 @@ export function useAppStore(activeSession) {
     }
 
     const handleAddCategory = async (category) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -270,7 +289,7 @@ export function useAppStore(activeSession) {
     }
 
     const handleUpdateCategory = async (updatedCategory) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -283,7 +302,7 @@ export function useAppStore(activeSession) {
     }
 
     const handleDeleteCategory = async (categoryId) => {
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             throw new Error(offlineFeatureMessage)
         }
 
@@ -316,7 +335,7 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return {
                 ok: false,
                 message: offlineFeatureMessage
@@ -357,7 +376,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return
         }
 
@@ -386,7 +405,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return
         }
 
@@ -413,7 +432,7 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return {
                 ok: false,
                 message: offlineFeatureMessage
@@ -448,7 +467,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return
         }
 
@@ -475,7 +494,7 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return {
                 ok: false,
                 message: offlineFeatureMessage
@@ -518,7 +537,7 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (isFallbackSession) {
+        if (offlineFeatureMessage) {
             return {
                 ok: false,
                 message: offlineFeatureMessage
@@ -550,6 +569,7 @@ export function useAppStore(activeSession) {
         orders,
         isCatalogLoading,
         catalogError,
+        serverHealth,
         cartCount: ensureArray(cartItems).reduce((total, item) => total + item.quantity, 0),
         unreadOrdersCount: ensureArray(orders).filter((order) => order.isNew).length,
         handleAddProduct,

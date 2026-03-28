@@ -12,6 +12,9 @@ export default function Dashboard(props) {
         handleLogout,
         categoryCount,
         productCount,
+        serverHealth,
+        isReadOnly,
+        readOnlyMessage,
         categorySectionProps,
         productSectionProps,
         productListProps
@@ -27,6 +30,9 @@ export default function Dashboard(props) {
                 <DashboardHeader
                     categoriesCount={categoryCount}
                     productsCount={productCount}
+                    serverHealth={serverHealth}
+                    isReadOnly={isReadOnly}
+                    readOnlyMessage={readOnlyMessage}
                     onLogout={handleLogout}
                 />
                 <CategorySection {...categorySectionProps} />

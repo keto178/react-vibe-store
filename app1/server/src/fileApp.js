@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken'
 import env from './config/env.js'
 import { sendAdminOrderEmail } from './services/emailService.js'
 import {
-    getExternalStorageMode,
     isExternalAssetUrl,
     isExternalStorageRequired,
     storeAssetFromDataUrl
@@ -14,13 +13,16 @@ import { encryptPhoneNumber } from './services/phoneCrypto.js'
 import { sendPhoneVerificationCodeSms } from './services/smsService.js'
 import {
     createId,
-    getFileStorageMode,
     getCartForUser,
     prepareFileStore,
     readStore,
     sanitizeUser,
     writeStore
 } from './services/fileStore.js'
+import {
+    buildFallbackRuntimeHealth,
+    TEMPORARY_PREVIEW_MESSAGE
+} from './services/runtimeHealth.js'
 import { calculateOrderSummary } from './utils/order.js'
 import {
     PHONE_OTP_LENGTH,
@@ -38,9 +40,7 @@ import {
 
 const app = express()
 const ALLOWED_NICOTINE_LEVELS = [9, 12, 30, 50]
-const TEMPORARY_STORAGE_WRITE_BLOCKED_MESSAGE = (
-    'Saving is temporarily disabled because the server is running in memory fallback mode. Restore MongoDB to enable persistent changes.'
-)
+const TEMPORARY_STORAGE_WRITE_BLOCKED_MESSAGE = TEMPORARY_PREVIEW_MESSAGE
 
 function isAllowedDevOrigin(origin) {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
@@ -336,7 +336,7 @@ app.use(express.json({ limit: '15mb' }))
 app.use(express.urlencoded({ extended: true, limit: '15mb' }))
 app.use((req, res, next) => {
     const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(req.method || '').toUpperCase())
-    const isTemporaryServerlessStore = process.env.VERCEL === '1' && getFileStorageMode() === 'memory'
+    const isTemporaryServerlessStore = !buildFallbackRuntimeHealth().writeAccess
     const isAllowedWriteDuringFallback = req.method === 'POST' && req.path === '/api/auth/login'
 
     if (!isTemporaryServerlessStore || !isWriteMethod || isAllowedWriteDuringFallback) {
@@ -348,11 +348,7 @@ app.use((req, res, next) => {
 })
 
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        storage: getFileStorageMode(),
-        fileStorage: getExternalStorageMode()
-    })
+    res.json(buildFallbackRuntimeHealth())
 })
 
 app.post('/api/auth/register', async (req, res) => {
@@ -431,7 +427,7 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const store = await prepareFileStore()
         const user = store.users.find((item) => item.email === email)
-        const isTemporaryServerlessStore = process.env.VERCEL === '1' && getFileStorageMode() === 'memory'
+        const isTemporaryServerlessStore = !buildFallbackRuntimeHealth().writeAccess
 
         if (!user && isTemporaryServerlessStore) {
             sendError(
