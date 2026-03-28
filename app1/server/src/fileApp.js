@@ -23,6 +23,7 @@ import {
     buildFallbackRuntimeHealth,
     TEMPORARY_PREVIEW_MESSAGE
 } from './services/runtimeHealth.js'
+import { isBlobAssetStorageAvailable, readBlobAsset } from './services/vercelBlobService.js'
 import { calculateOrderSummary } from './utils/order.js'
 import {
     PHONE_OTP_LENGTH,
@@ -349,6 +350,43 @@ app.use((req, res, next) => {
 
 app.get('/api/health', (req, res) => {
     res.json(buildFallbackRuntimeHealth())
+})
+
+app.get('/api/assets/blob', async (req, res) => {
+    const pathname = String(req.query?.pathname || '').trim()
+
+    if (!pathname) {
+        sendError(res, 400, 'Blob asset pathname is required.')
+        return
+    }
+
+    if (!isBlobAssetStorageAvailable()) {
+        sendError(res, 503, 'Blob asset storage is not configured for this deployment.')
+        return
+    }
+
+    try {
+        const assetResult = await readBlobAsset(pathname)
+
+        if (!assetResult?.stream || assetResult.statusCode !== 200) {
+            sendError(res, 404, 'Blob asset not found.')
+            return
+        }
+
+        const assetBuffer = Buffer.from(await new Response(assetResult.stream).arrayBuffer())
+
+        res.set('Cache-Control', assetResult.blob.cacheControl || 'public, max-age=31536000, immutable')
+        res.set('Content-Disposition', assetResult.blob.contentDisposition || 'inline')
+        res.type(assetResult.blob.contentType || 'application/octet-stream')
+        res.send(assetBuffer)
+    } catch (error) {
+        console.error('[fallback-assets/blob] Failed to load blob asset.', {
+            pathname,
+            errorMessage: error.message,
+            stack: error.stack || ''
+        })
+        sendError(res, 500, 'Unable to load the requested asset right now.')
+    }
 })
 
 app.post('/api/auth/register', async (req, res) => {

@@ -1,5 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 import env from '../config/env.js'
+import {
+    isBlobAssetUrl,
+    isBlobAssetStorageAvailable,
+    uploadBlobAsset
+} from './vercelBlobService.js'
 
 const DATA_URL_PATTERN = /^data:([^;,]+)?(;base64)?,([\s\S]+)$/
 
@@ -38,7 +43,8 @@ function parseDataUrl(dataUrl = '') {
 
     return {
         mimeType,
-        bytes: buffer.byteLength
+        bytes: buffer.byteLength,
+        buffer
     }
 }
 
@@ -114,15 +120,25 @@ export function isExternalStorageRequired() {
 }
 
 export function getExternalStorageMode() {
-    return hasCloudinaryConfiguration() ? 'cloudinary' : 'disabled'
+    if (hasCloudinaryConfiguration()) {
+        return 'cloudinary'
+    }
+
+    if (isBlobAssetStorageAvailable()) {
+        return 'vercel-blob'
+    }
+
+    return isExternalStorageRequired() ? 'disabled' : 'inline-dev'
 }
 
 export function isExternalAssetUrl(value = '') {
-    return /^https?:\/\/.+/i.test(String(value || '').trim())
+    const normalizedValue = String(value || '').trim()
+
+    return /^https?:\/\/.+/i.test(normalizedValue) || isBlobAssetUrl(normalizedValue)
 }
 
 export async function storeAssetFromDataUrl({ dataUrl, fileName = '', scope = 'uploads' }) {
-    const { mimeType, bytes } = parseDataUrl(dataUrl)
+    const { mimeType, bytes, buffer } = parseDataUrl(dataUrl)
     const maxUploadBytes = getMaxUploadBytes()
 
     if (bytes > maxUploadBytes) {
@@ -142,8 +158,25 @@ export async function storeAssetFromDataUrl({ dataUrl, fileName = '', scope = 'u
         }
     }
 
+    if (isBlobAssetStorageAvailable()) {
+        const blobResult = await uploadBlobAsset({
+            buffer,
+            contentType: mimeType,
+            fileName,
+            scope
+        })
+
+        return {
+            url: blobResult.url,
+            storage: 'vercel-blob',
+            publicId: blobResult.pathname,
+            bytes,
+            mimeType
+        }
+    }
+
     if (isExternalStorageRequired()) {
-        throw new Error('External storage is not configured. Set Cloudinary credentials before uploading files.')
+        throw new Error('External storage is not configured. Set Cloudinary credentials or connect Vercel Blob before uploading files.')
     }
 
     return {

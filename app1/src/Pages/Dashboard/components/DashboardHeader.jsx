@@ -9,6 +9,10 @@ function formatApiModeLabel(serverHealth) {
         return 'Local File Storage'
     }
 
+    if (serverHealth?.apiMode === 'blob') {
+        return 'Vercel Blob Storage'
+    }
+
     if (serverHealth?.apiMode === 'memory') {
         return 'Temporary Preview'
     }

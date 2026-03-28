@@ -5,6 +5,10 @@ export const TEMPORARY_PREVIEW_MESSAGE = (
     'This deployment is running in temporary preview mode without MongoDB. The catalog comes from bundled seed data and saving is disabled until the database is configured.'
 )
 
+export const VERCEL_BLOB_FALLBACK_MESSAGE = (
+    'MongoDB is unavailable, so this deployment is using Vercel Blob fallback storage for persistent catalog updates.'
+)
+
 export const LOCAL_FILE_STORAGE_MESSAGE = (
     'The API is running in local file-storage mode because MongoDB is unavailable. Changes are saved only on this machine.'
 )
@@ -26,6 +30,21 @@ export function buildMongoRuntimeHealth() {
 export function buildFallbackRuntimeHealth() {
     const storage = getFileStorageMode()
     const isTemporaryPreview = storage === 'memory'
+    const isBlobFallback = storage === 'blob'
+
+    if (isBlobFallback) {
+        return {
+            status: 'ok',
+            storage,
+            apiMode: storage,
+            persistence: 'persistent',
+            catalogSource: getFileCatalogSource(),
+            writeAccess: true,
+            fileStorage: getExternalStorageMode(),
+            message: VERCEL_BLOB_FALLBACK_MESSAGE,
+            warnings: ['MongoDB is unavailable for this deployment, so Vercel Blob fallback storage is active.']
+        }
+    }
 
     return {
         status: 'ok',

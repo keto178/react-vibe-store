@@ -43,10 +43,14 @@ async function loadCoreServerModules() {
 
 async function loadFallbackModules() {
     if (!fallbackModulesPromise) {
-        fallbackModulesPromise = import('../app1/server/src/fileApp.js')
-            .then((fallbackModule) => ({
+        fallbackModulesPromise = Promise.all([
+            import('../app1/server/src/fileApp.js'),
+            import('../app1/server/src/services/fileStore.js')
+        ])
+            .then(([fallbackModule, fileStoreModule]) => ({
                 fileApp: fallbackModule.default,
-                prepareFileApi: fallbackModule.prepareFileApi
+                prepareFileApi: fallbackModule.prepareFileApi,
+                getFileStorageMode: fileStoreModule.getFileStorageMode
             }))
             .catch((error) => {
                 fallbackModulesPromise = null
@@ -107,13 +111,14 @@ async function resolveServerApp() {
         try {
             const {
                 fileApp,
-                prepareFileApi
+                prepareFileApi,
+                getFileStorageMode
             } = await loadFallbackModules()
 
             await prepareFileApi()
             console.warn('[api/startup] Using fallback API app.', {
                 reason: isMissingMongoUri ? 'missing-mongodb-uri' : 'mongodb-startup-failed',
-                storageMode: isVercelDeployment ? 'memory' : 'file'
+                storageMode: getFileStorageMode()
             })
             return fileApp
         } catch (fallbackError) {

@@ -3,6 +3,11 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import env from '../config/env.js'
 import { maskPhoneNumber } from '../utils/phoneVerification.js'
+import {
+    isBlobRuntimeStoreEnabled,
+    readRuntimeStoreBlob,
+    writeRuntimeStoreBlob
+} from './vercelBlobService.js'
 
 const DATA_DIRECTORY_URL = new URL('../../data/', import.meta.url)
 const LEGACY_DATA_FILE_URL = new URL('../../data/store.json', import.meta.url)
@@ -76,10 +81,18 @@ async function getMemoryStore() {
 }
 
 export function getFileStorageMode() {
+    if (isBlobRuntimeStoreEnabled()) {
+        return 'blob'
+    }
+
     return isServerlessDeployment ? 'memory' : 'file'
 }
 
 export function getFileCatalogSource() {
+    if (isBlobRuntimeStoreEnabled()) {
+        return 'vercel-blob'
+    }
+
     return isServerlessDeployment ? 'bundled-seed' : 'local-runtime'
 }
 
@@ -88,6 +101,18 @@ export function createId(prefix = '') {
 }
 
 export async function readStore() {
+    if (isBlobRuntimeStoreEnabled()) {
+        const blobStore = await readRuntimeStoreBlob()
+
+        if (blobStore) {
+            return normalizeStoreShape(blobStore)
+        }
+
+        const initialStore = await loadBundledStore()
+        await writeStore(initialStore)
+        return initialStore
+    }
+
     if (isServerlessDeployment) {
         return cloneStore(await getMemoryStore())
     }
@@ -106,6 +131,11 @@ export async function readStore() {
 }
 
 export async function writeStore(store) {
+    if (isBlobRuntimeStoreEnabled()) {
+        await writeRuntimeStoreBlob(normalizeStoreShape(store))
+        return
+    }
+
     if (isServerlessDeployment) {
         globalThis[MEMORY_STORE_KEY] = cloneStore(store)
         return

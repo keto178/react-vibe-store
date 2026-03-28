@@ -103,9 +103,15 @@ const env = {
 export function getConfigDiagnostics() {
     const missing = []
     const warnings = []
+    const hasBlobToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+    const canUsePersistentVercelFallback = process.env.VERCEL === '1' && hasBlobToken
 
     if (!env.mongoUri) {
-        missing.push('MONGODB_URI (or DATABASE_URL, MONGO_URI, MONGODB_URL)')
+        if (canUsePersistentVercelFallback) {
+            warnings.push('MONGODB_URI is not set. This deployment will use Vercel Blob fallback storage instead of MongoDB.')
+        } else {
+            missing.push('MONGODB_URI (or DATABASE_URL, MONGO_URI, MONGODB_URL)')
+        }
     }
 
     if (!process.env.JWT_SECRET) {
@@ -127,13 +133,18 @@ export function getConfigDiagnostics() {
     }
 
     if (isProduction && (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret)) {
-        warnings.push('Cloudinary storage is not configured. Upload endpoints will reject files in production.')
+        warnings.push(
+            hasBlobToken
+                ? 'Cloudinary storage is not configured. Uploads will use Vercel Blob storage.'
+                : 'Cloudinary storage is not configured. Upload endpoints will reject files in production.'
+        )
     }
 
     return {
         nodeEnv: env.nodeEnv,
         mongoUriSource: env.mongoUriSource,
         hasMongoUri: Boolean(env.mongoUri),
+        hasBlobToken,
         missing,
         warnings
     }
