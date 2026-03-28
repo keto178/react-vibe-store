@@ -14,6 +14,8 @@ export default function AppRoutes({
     activeSession,
     categories = [],
     products = [],
+    isCatalogLoading = false,
+    catalogError = '',
     cartItems = [],
     orders = [],
     onAddToCart,
@@ -39,8 +41,30 @@ export default function AppRoutes({
     return (
         <Suspense fallback={routeFallback}>
             <Routes>
-                <Route path="/" element={<Home categories={categories} products={products} onAddToCart={onAddToCart} />} />
-                <Route path="/Home" element={<Home categories={categories} products={products} onAddToCart={onAddToCart} />} />
+                <Route
+                    path="/"
+                    element={(
+                        <Home
+                            categories={categories}
+                            products={products}
+                            onAddToCart={onAddToCart}
+                            isCatalogLoading={isCatalogLoading}
+                            catalogError={catalogError}
+                        />
+                    )}
+                />
+                <Route
+                    path="/Home"
+                    element={(
+                        <Home
+                            categories={categories}
+                            products={products}
+                            onAddToCart={onAddToCart}
+                            isCatalogLoading={isCatalogLoading}
+                            catalogError={catalogError}
+                        />
+                    )}
+                />
                 <Route
                     path="/Cart"
                     element={

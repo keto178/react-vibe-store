@@ -10,26 +10,65 @@ function normalizeBaseUrl(url) {
     return url.replace(/\/$/, '')
 }
 
-function resolveApiBaseUrl() {
+function isLoopbackHostname(hostname = '') {
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
+}
+
+function addApiBaseUrlCandidate(candidates, value) {
+    if (!value) {
+        return
+    }
+
+    const normalizedValue = normalizeBaseUrl(value)
+
+    if (!normalizedValue || candidates.includes(normalizedValue)) {
+        return
+    }
+
+    candidates.push(normalizedValue)
+}
+
+function resolveApiBaseUrls() {
+    const candidates = []
     const configuredBaseUrl = import.meta.env.VITE_API_URL
 
     if (configuredBaseUrl) {
-        return normalizeBaseUrl(configuredBaseUrl)
+        let shouldUseConfiguredBaseUrl = true
+
+        if (typeof window !== 'undefined') {
+            try {
+                const configuredUrl = new URL(configuredBaseUrl, window.location.origin)
+                const currentHostname = window.location.hostname
+                const configuredHostname = configuredUrl.hostname
+
+                if (!isLoopbackHostname(currentHostname) && isLoopbackHostname(configuredHostname)) {
+                    shouldUseConfiguredBaseUrl = false
+                }
+            } catch {
+                // Keep configured value if parsing fails.
+            }
+        }
+
+        if (shouldUseConfiguredBaseUrl) {
+            addApiBaseUrlCandidate(candidates, configuredBaseUrl)
+        }
     }
 
     if (typeof window !== 'undefined') {
         const { hostname, port, protocol } = window.location
-        const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1'
+        const isLocalHost = isLoopbackHostname(hostname)
 
         if (protocol === 'file:' || (isLocalHost && port !== '5000')) {
-            return `http://${hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost'}:5000/api`
+            addApiBaseUrlCandidate(candidates, `http://${hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost'}:5000/api`)
         }
     }
 
-    return '/api'
+    addApiBaseUrlCandidate(candidates, '/api')
+
+    return candidates
 }
 
-const API_BASE_URL = resolveApiBaseUrl()
+const API_BASE_URL_CANDIDATES = resolveApiBaseUrls()
 
 function createUnexpectedApiResponseError(message) {
     return new Error(message || 'The API returned an unexpected response.')
@@ -84,24 +123,34 @@ async function apiRequest(path, options = {}) {
         ...options.headers
     }
 
-    let response
+    let response = null
+    let usedApiBaseUrl = ''
+    let lastNetworkError = null
 
-    try {
-        response = await fetch(`${API_BASE_URL}${path}`, {
-            method,
-            headers,
-            body: options.body ? JSON.stringify(options.body) : undefined
-        })
-    } catch (networkError) {
-        logApiError('Network request failed.', {
-            method,
-            path,
-            baseUrl: API_BASE_URL,
-            errorMessage: networkError.message
-        })
+    for (const baseUrl of API_BASE_URL_CANDIDATES) {
+        try {
+            response = await fetch(`${baseUrl}${path}`, {
+                method,
+                headers,
+                body: options.body ? JSON.stringify(options.body) : undefined
+            })
+            usedApiBaseUrl = baseUrl
+            break
+        } catch (networkError) {
+            lastNetworkError = networkError
 
+            logApiError('Network request failed.', {
+                method,
+                path,
+                baseUrl,
+                errorMessage: networkError.message
+            })
+        }
+    }
+
+    if (!response) {
         throw new Error(
-            'Cannot reach the API server. Check that the backend is running locally or that the Vercel /api function is deployed correctly.'
+            `Cannot reach the API server. Tried: ${API_BASE_URL_CANDIDATES.join(', ')}. ${lastNetworkError?.message || ''}`.trim()
         )
     }
 
@@ -113,6 +162,7 @@ async function apiRequest(path, options = {}) {
         logApiError('Response parsing failed.', {
             method,
             path,
+            baseUrl: usedApiBaseUrl,
             status: response.status,
             errorMessage: parseError.message
         })
@@ -136,6 +186,7 @@ async function apiRequest(path, options = {}) {
             logApiError('API response error.', {
                 method,
                 path,
+                baseUrl: usedApiBaseUrl,
                 status: response.status,
                 statusText: response.statusText,
                 message: data?.message || 'Request failed.',

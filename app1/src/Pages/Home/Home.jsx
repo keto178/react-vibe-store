@@ -6,7 +6,13 @@ import Card from '../Card/Card'
 import CategoryListSection from './components/CategoryListSection'
 import AddToCartToast from './components/AddToCartToast'
 
-export default function Home({ categories = [], products = [], onAddToCart }) {
+export default function Home({
+    categories = [],
+    products = [],
+    onAddToCart,
+    isCatalogLoading = false,
+    catalogError = ''
+}) {
     const [searchParams, setSearchParams] = useSearchParams()
     const categorySectionRef = useRef(null)
     const productsSectionRef = useRef(null)
@@ -229,6 +235,16 @@ export default function Home({ categories = [], products = [], onAddToCart }) {
                         {sortedProducts.map((product) => (
                             <Card key={product.id} product={product} onAddToCart={handleAddToCartFromHome} />
                         ))}
+                    </div>
+                ) : isCatalogLoading ? (
+                    <div className='products-empty-state'>
+                        <h3>Loading products...</h3>
+                        <p>Fetching the latest catalog from the server.</p>
+                    </div>
+                ) : catalogError ? (
+                    <div className='products-empty-state'>
+                        <h3>Unable to load products</h3>
+                        <p>{catalogError}</p>
                     </div>
                 ) : (
                     <div className='products-empty-state'>

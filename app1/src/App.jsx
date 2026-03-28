@@ -17,6 +17,8 @@ function App() {
     cartItems,
     categories,
     orders,
+    isCatalogLoading,
+    catalogError,
     cartCount,
     unreadOrdersCount,
     handleAddProduct,
@@ -86,6 +88,8 @@ function App() {
           activeSession={activeSession}
           categories={categories}
           products={products}
+          isCatalogLoading={isCatalogLoading}
+          catalogError={catalogError}
           cartItems={cartItems}
           orders={orders}
           onAddToCart={handleAddToCart}

@@ -52,6 +52,8 @@ export function useAppStore(activeSession) {
     const [cartItems, setCartItems] = useState([])
     const [categories, setCategories] = useState([])
     const [orders, setOrders] = useState([])
+    const [isCatalogLoading, setIsCatalogLoading] = useState(true)
+    const [catalogError, setCatalogError] = useState('')
 
     const isAdmin = isDashboardOwner(activeSession)
     const sessionId = activeSession?.id || ''
@@ -98,6 +100,9 @@ export function useAppStore(activeSession) {
         let isCancelled = false
 
         async function loadStore() {
+            setIsCatalogLoading(true)
+            setCatalogError('')
+
             try {
                 const catalogPromise = Promise.all([
                     fetchCategoriesApi(),
@@ -149,6 +154,8 @@ export function useAppStore(activeSession) {
 
                 setCategories(ensureArray(categoriesResponse?.categories))
                 setProducts(ensureArray(productsResponse?.products))
+                setCatalogError('')
+                setIsCatalogLoading(false)
 
                 if (isFallbackSession) {
                     setCartItems([])
@@ -174,6 +181,9 @@ export function useAppStore(activeSession) {
                 if (isCancelled) {
                     return
                 }
+
+                setCatalogError(error.message || 'Unable to load catalog data right now.')
+                setIsCatalogLoading(false)
 
                 if (!hasSession) {
                     setCartItems(readGuestCartItems())
@@ -538,6 +548,8 @@ export function useAppStore(activeSession) {
         cartItems,
         categories,
         orders,
+        isCatalogLoading,
+        catalogError,
         cartCount: ensureArray(cartItems).reduce((total, item) => total + item.quantity, 0),
         unreadOrdersCount: ensureArray(orders).filter((order) => order.isNew).length,
         handleAddProduct,
