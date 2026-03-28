@@ -13,7 +13,7 @@ React + Vite storefront with a new Node.js + Express + MongoDB backend.
 - User order history and admin order management
 - Admin email notification support through Nodemailer
 - Local file-storage fallback for backend development when MongoDB is unavailable
-- In-memory server fallback on Vercel when MongoDB is unavailable
+- Production API prefers MongoDB-only mode and can use optional emergency in-memory fallback via env flag
 
 ## Frontend
 
@@ -38,6 +38,9 @@ If you deploy the whole repository to Vercel, the included `vercel.json` already
 For the backend to work on Vercel, add these environment variables in the Vercel project settings:
 
 - `MONGODB_URI`
+- `DATABASE_URL` (optional alias)
+- `MONGO_URI` (optional alias)
+- `MONGODB_URL` (optional alias)
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `ADMIN_USERNAME`
@@ -67,6 +70,11 @@ npm run dev
 Important backend environment variables:
 
 - `MONGODB_URI`: MongoDB connection string
+- `DATABASE_URL` / `MONGO_URI` / `MONGODB_URL`: accepted aliases for MongoDB connection string
+- `MONGO_SERVER_SELECTION_TIMEOUT_MS`: Mongo initial server selection timeout (default `15000` in production)
+- `MONGO_CONNECT_RETRIES`: retry count before failing startup (default `2` in production)
+- `MONGO_CONNECT_RETRY_DELAY_MS`: retry delay in milliseconds (default `1500`)
+- `ALLOW_PRODUCTION_MEMORY_FALLBACK`: set to `true` only for emergency temporary access when MongoDB is down
 - `JWT_SECRET`: secret used to sign auth tokens
 - `ADMIN_USERNAME`: seeded admin username
 - `ADMIN_EMAIL`: seeded admin login email

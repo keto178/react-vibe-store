@@ -4,15 +4,78 @@ dotenv.config()
 
 const nodeEnv = process.env.NODE_ENV || 'development'
 const isProduction = nodeEnv === 'production'
-const mongoUriFromEnv = process.env.MONGODB_URI || process.env.DATABASE_URL || ''
+
+function parsePositiveInt(rawValue, fallbackValue) {
+    const parsedValue = Number(rawValue)
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+        return fallbackValue
+    }
+
+    return Math.floor(parsedValue)
+}
+
+function parseNonNegativeInt(rawValue, fallbackValue) {
+    const parsedValue = Number(rawValue)
+    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+        return fallbackValue
+    }
+
+    return Math.floor(parsedValue)
+}
+
+function resolveMongoUri() {
+    if (process.env.MONGODB_URI) {
+        return {
+            value: process.env.MONGODB_URI,
+            source: 'MONGODB_URI'
+        }
+    }
+
+    if (process.env.DATABASE_URL) {
+        return {
+            value: process.env.DATABASE_URL,
+            source: 'DATABASE_URL'
+        }
+    }
+
+    if (process.env.MONGO_URI) {
+        return {
+            value: process.env.MONGO_URI,
+            source: 'MONGO_URI'
+        }
+    }
+
+    if (process.env.MONGODB_URL) {
+        return {
+            value: process.env.MONGODB_URL,
+            source: 'MONGODB_URL'
+        }
+    }
+
+    return {
+        value: '',
+        source: 'default'
+    }
+}
+
+const mongoConfig = resolveMongoUri()
+const mongoUriValue = mongoConfig.value || (isProduction ? '' : 'mongodb://127.0.0.1:27017/app1-ecommerce')
 
 const env = {
     nodeEnv,
     port: Number(process.env.PORT) || 5000,
-    mongoUri: mongoUriFromEnv || (isProduction ? '' : 'mongodb://127.0.0.1:27017/app1-ecommerce'),
-    mongoUriSource: process.env.MONGODB_URI
-        ? 'MONGODB_URI'
-        : (process.env.DATABASE_URL ? 'DATABASE_URL' : 'default'),
+    mongoUri: mongoUriValue,
+    mongoUriSource: mongoConfig.source,
+    mongoServerSelectionTimeoutMs: parsePositiveInt(
+        process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS,
+        isProduction ? 15000 : 8000
+    ),
+    mongoConnectTimeoutMs: parsePositiveInt(process.env.MONGO_CONNECT_TIMEOUT_MS, 15000),
+    mongoSocketTimeoutMs: parsePositiveInt(process.env.MONGO_SOCKET_TIMEOUT_MS, 45000),
+    mongoConnectMaxRetries: parseNonNegativeInt(process.env.MONGO_CONNECT_RETRIES, isProduction ? 2 : 1),
+    mongoConnectRetryDelayMs: parsePositiveInt(process.env.MONGO_CONNECT_RETRY_DELAY_MS, 1500),
+    mongoMaxPoolSize: parsePositiveInt(process.env.MONGO_MAX_POOL_SIZE, isProduction ? 10 : 5),
+    allowProductionMemoryFallback: process.env.ALLOW_PRODUCTION_MEMORY_FALLBACK === 'true',
     jwtSecret: process.env.JWT_SECRET || 'replace-this-with-a-secure-secret',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
     clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -43,7 +106,7 @@ export function getConfigDiagnostics() {
     const warnings = []
 
     if (!env.mongoUri) {
-        missing.push('MONGODB_URI (or DATABASE_URL)')
+        missing.push('MONGODB_URI (or DATABASE_URL, MONGO_URI, MONGODB_URL)')
     }
 
     if (!process.env.JWT_SECRET) {
@@ -66,6 +129,10 @@ export function getConfigDiagnostics() {
 
     if (isProduction && (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret)) {
         warnings.push('Cloudinary storage is not configured. Upload endpoints will reject files in production.')
+    }
+
+    if (isProduction && env.allowProductionMemoryFallback) {
+        warnings.push('ALLOW_PRODUCTION_MEMORY_FALLBACK=true is enabled. Data may be temporary while MongoDB is unavailable.')
     }
 
     return {

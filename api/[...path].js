@@ -31,6 +31,7 @@ async function loadCoreServerModules() {
             connectToDatabase: dbModule.connectToDatabase,
             getDatabaseDebugState: dbModule.getDatabaseDebugState,
             getConfigDiagnostics: envModule.getConfigDiagnostics,
+            runtimeEnv: envModule.default,
             seedDefaults: seedModule.seedDefaults
         })).catch((error) => {
             coreModulesPromise = null
@@ -82,6 +83,7 @@ async function resolveServerApp() {
         connectToDatabase,
         getDatabaseDebugState,
         getConfigDiagnostics,
+        runtimeEnv,
         seedDefaults
     } = await loadCoreServerModules()
 
@@ -95,10 +97,13 @@ async function resolveServerApp() {
         })
         return app
     } catch (error) {
-        const shouldUseFallback = !isVercelDeployment && process.env.NODE_ENV !== 'production'
+        const allowProductionFallback = Boolean(runtimeEnv.allowProductionMemoryFallback)
+        const shouldUseFallback = (!isVercelDeployment && process.env.NODE_ENV !== 'production') || allowProductionFallback
+        const isMissingMongoUri = String(error.message || '').includes('MongoDB URI is not configured')
 
         console.error('[api/startup] MongoDB startup failed. Attempting fallback app.', {
             isVercelDeployment,
+            allowProductionFallback,
             shouldUseFallback,
             database: getDatabaseDebugState(),
             errorMessage: error.message,
@@ -106,7 +111,11 @@ async function resolveServerApp() {
         })
 
         if (!shouldUseFallback) {
-            throw new Error('Database connection failed. Fallback storage is disabled in production deployments.')
+            throw new Error(
+                isMissingMongoUri
+                    ? 'Database connection failed: MONGODB_URI is missing in server environment.'
+                    : 'Database connection failed. Fallback storage is disabled in production deployments.'
+            )
         }
 
         try {
@@ -153,12 +162,19 @@ export default async function handler(req, res) {
         })
 
         if (!res.headersSent) {
-            const isDatabaseStartupFailure = String(error.message || '').includes('Database connection failed')
+            const errorMessage = String(error.message || '')
+            const isDatabaseStartupFailure = errorMessage.includes('Database connection failed')
+            const isMissingMongoUri = errorMessage.includes('MONGODB_URI is missing')
 
             res.status(isDatabaseStartupFailure ? 503 : 500).json({
                 message: isDatabaseStartupFailure
-                    ? 'Database is temporarily unavailable. Please try again shortly.'
+                    ? (isMissingMongoUri
+                        ? 'Database configuration is incomplete. Please set MONGODB_URI in server environment variables.'
+                        : 'Database is temporarily unavailable. Please try again shortly.')
                     : 'The API could not process this request. Check server logs for details.',
+                code: isDatabaseStartupFailure
+                    ? (isMissingMongoUri ? 'DB_CONFIG_MISSING' : 'DB_UNAVAILABLE')
+                    : 'API_REQUEST_FAILED',
                 requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || undefined
             })
         }
