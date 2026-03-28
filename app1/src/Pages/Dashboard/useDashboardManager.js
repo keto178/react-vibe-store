@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { clearActiveSession } from '../../utils/auth'
 import { readFileAsDataUrl } from '../../utils/files'
 import { MAX_NICOTINE_LEVELS, sanitizeNicotineLevels } from '../../utils/nicotine'
+import { uploadAssetApi } from '../../utils/api'
 import {
     createCategoryForm,
     createCategoryFormFromItem,
@@ -37,6 +38,21 @@ export function useDashboardManager({
     const productSectionRef = useRef(null)
     const isEditingCategory = editingCategoryId !== null
     const isEditingProduct = editingProductId !== null
+
+    const uploadSelectedFile = async (file, scope) => {
+        const dataUrl = await readFileAsDataUrl(file)
+        const response = await uploadAssetApi({
+            dataUrl,
+            fileName: file.name || 'upload',
+            scope
+        })
+
+        if (!response?.url) {
+            throw new Error('Upload failed. The server did not return a file URL.')
+        }
+
+        return response.url
+    }
 
     useEffect(() => {
         setProductForm((currentForm) => {
@@ -241,7 +257,9 @@ export function useDashboardManager({
         setIsSavingCategory(true)
 
         try {
-            const image = categoryForm.imageFile ? await readFileAsDataUrl(categoryForm.imageFile) : categoryForm.existingImage
+            const image = categoryForm.imageFile
+                ? await uploadSelectedFile(categoryForm.imageFile, 'categories')
+                : categoryForm.existingImage
             const preparedCategory = {
                 id: editingCategoryId || `${Date.now()}`,
                 name: categoryForm.name.trim(),
@@ -347,7 +365,9 @@ export function useDashboardManager({
         setIsSavingProduct(true)
 
         try {
-            const image = productForm.imageFile ? await readFileAsDataUrl(productForm.imageFile) : productForm.existingImage
+            const image = productForm.imageFile
+                ? await uploadSelectedFile(productForm.imageFile, 'products')
+                : productForm.existingImage
             const preparedProduct = {
                 id: editingProductId || `${Date.now()}`,
                 name: productForm.name.trim(),

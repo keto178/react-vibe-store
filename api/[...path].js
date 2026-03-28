@@ -95,12 +95,19 @@ async function resolveServerApp() {
         })
         return app
     } catch (error) {
+        const shouldUseFallback = !isVercelDeployment && process.env.NODE_ENV !== 'production'
+
         console.error('[api/startup] MongoDB startup failed. Attempting fallback app.', {
             isVercelDeployment,
+            shouldUseFallback,
             database: getDatabaseDebugState(),
             errorMessage: error.message,
             stack: error.stack || ''
         })
+
+        if (!shouldUseFallback) {
+            throw new Error('Database connection failed. Fallback storage is disabled in production deployments.')
+        }
 
         try {
             const {
@@ -146,8 +153,12 @@ export default async function handler(req, res) {
         })
 
         if (!res.headersSent) {
-            res.status(500).json({
-                message: 'The API could not process this request. Check server logs for details.',
+            const isDatabaseStartupFailure = String(error.message || '').includes('Database connection failed')
+
+            res.status(isDatabaseStartupFailure ? 503 : 500).json({
+                message: isDatabaseStartupFailure
+                    ? 'Database is temporarily unavailable. Please try again shortly.'
+                    : 'The API could not process this request. Check server logs for details.',
                 requestId: req.headers['x-vercel-id'] || req.headers['x-request-id'] || undefined
             })
         }

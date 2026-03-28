@@ -2,11 +2,13 @@ import cors from 'cors'
 import express from 'express'
 import env from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import { getExternalStorageMode } from './services/externalStorageService.js'
 import authRoutes from './routes/authRoutes.js'
 import cartRoutes from './routes/cartRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
 import productRoutes from './routes/productRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
 
 const app = express()
 
@@ -47,7 +49,8 @@ app.use('/api', (req, res, next) => {
 
 app.get('/api/health', (req, res) => {
     res.json({
-        status: 'ok'
+        status: 'ok',
+        fileStorage: getExternalStorageMode()
     })
 })
 
@@ -56,6 +59,7 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/uploads', uploadRoutes)
 
 app.use(notFoundHandler)
 app.use(errorHandler)

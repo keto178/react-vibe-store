@@ -4,6 +4,12 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import env from './config/env.js'
 import { sendAdminOrderEmail } from './services/emailService.js'
+import {
+    getExternalStorageMode,
+    isExternalAssetUrl,
+    isExternalStorageRequired,
+    storeAssetFromDataUrl
+} from './services/externalStorageService.js'
 import { encryptPhoneNumber } from './services/phoneCrypto.js'
 import { sendPhoneVerificationCodeSms } from './services/smsService.js'
 import {
@@ -329,7 +335,8 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }))
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        storage: getFileStorageMode()
+        storage: getFileStorageMode(),
+        fileStorage: getExternalStorageMode()
     })
 })
 
@@ -445,6 +452,32 @@ app.get('/api/auth/me', authenticate, (req, res) => {
     res.json({
         user: sanitizeUser(req.user)
     })
+})
+
+app.post('/api/uploads', authenticate, requirePhoneVerified, async (req, res) => {
+    const dataUrl = String(req.body?.dataUrl || '').trim()
+    const fileName = String(req.body?.fileName || '').trim()
+    const scope = String(req.body?.scope || 'uploads').trim()
+
+    if (!dataUrl) {
+        sendError(res, 400, 'File payload is required.')
+        return
+    }
+
+    try {
+        const uploadResult = await storeAssetFromDataUrl({
+            dataUrl,
+            fileName,
+            scope
+        })
+
+        res.status(201).json({
+            message: 'File uploaded successfully.',
+            ...uploadResult
+        })
+    } catch (error) {
+        sendError(res, 400, error.message)
+    }
 })
 
 app.post('/api/auth/phone/request-code', authenticate, async (req, res) => {
@@ -615,6 +648,11 @@ app.post('/api/categories', authenticate, requirePhoneVerified, requireAdmin, as
         return
     }
 
+    if (isExternalStorageRequired() && !isExternalAssetUrl(image)) {
+        sendError(res, 400, 'Category image must be an external URL. Upload the file first using /api/uploads.')
+        return
+    }
+
     const duplicateCategory = store.categories.find((category) => (
         category.name.trim().toLowerCase() === name.toLowerCase() &&
         category.group === group
@@ -658,6 +696,11 @@ app.put('/api/categories/:categoryId', authenticate, requirePhoneVerified, requi
 
     if (!name || !image) {
         sendError(res, 400, 'Category name and image are required.')
+        return
+    }
+
+    if (isExternalStorageRequired() && !isExternalAssetUrl(image)) {
+        sendError(res, 400, 'Category image must be an external URL. Upload the file first using /api/uploads.')
         return
     }
 
@@ -784,6 +827,11 @@ app.post('/api/products', authenticate, requirePhoneVerified, requireAdmin, asyn
         return
     }
 
+    if (isExternalStorageRequired() && !isExternalAssetUrl(req.body.image.trim())) {
+        sendError(res, 400, 'Product image must be an external URL. Upload the file first using /api/uploads.')
+        return
+    }
+
     if (Number(req.body.price) <= 0) {
         sendError(res, 400, 'Name, description, price, image, and category are required.')
         return
@@ -838,6 +886,11 @@ app.put('/api/products/:productId', authenticate, requirePhoneVerified, requireA
 
     if (!req.body.name?.trim() || !req.body.description?.trim() || !req.body.image?.trim() || !category) {
         sendError(res, 400, 'Name, description, price, image, and category are required.')
+        return
+    }
+
+    if (isExternalStorageRequired() && !isExternalAssetUrl(req.body.image.trim())) {
+        sendError(res, 400, 'Product image must be an external URL. Upload the file first using /api/uploads.')
         return
     }
 

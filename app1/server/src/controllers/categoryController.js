@@ -2,6 +2,7 @@ import Cart from '../models/Cart.js'
 import Category from '../models/Category.js'
 import Product from '../models/Product.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { isExternalAssetUrl, isExternalStorageRequired } from '../services/externalStorageService.js'
 import { serializeCategory } from '../utils/serializers.js'
 
 const CATALOG_CACHE_CONTROL = 'no-store'
@@ -24,6 +25,11 @@ export const createCategory = asyncHandler(async (req, res) => {
     if (!name || !image) {
         res.status(400)
         throw new Error('Category name and image are required.')
+    }
+
+    if (isExternalStorageRequired() && !isExternalAssetUrl(image)) {
+        res.status(400)
+        throw new Error('Category image must be an external URL. Upload the file first using /api/uploads.')
     }
 
     const existingCategory = await Category.findOne({ name, group })
@@ -60,6 +66,11 @@ export const updateCategory = asyncHandler(async (req, res) => {
     if (!nextName || !nextImage) {
         res.status(400)
         throw new Error('Category name and image are required.')
+    }
+
+    if (isExternalStorageRequired() && !isExternalAssetUrl(nextImage)) {
+        res.status(400)
+        throw new Error('Category image must be an external URL. Upload the file first using /api/uploads.')
     }
 
     const duplicateCategory = await Category.findOne({

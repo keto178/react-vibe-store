@@ -181,6 +181,13 @@ export function verifyPhoneVerificationCodeApi(payload) {
     })
 }
 
+export function uploadAssetApi(payload) {
+    return apiRequest('/uploads', {
+        method: 'POST',
+        body: payload
+    })
+}
+
 export function fetchCategoriesApi() {
     return apiRequest('/categories')
 }

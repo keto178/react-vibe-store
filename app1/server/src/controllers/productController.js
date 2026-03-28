@@ -2,6 +2,7 @@ import Cart from '../models/Cart.js'
 import Category from '../models/Category.js'
 import Product from '../models/Product.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { isExternalAssetUrl, isExternalStorageRequired } from '../services/externalStorageService.js'
 import { serializeProduct } from '../utils/serializers.js'
 
 const ALLOWED_NICOTINE_LEVELS = [9, 12, 30, 50]
@@ -96,6 +97,11 @@ export const createProduct = asyncHandler(async (req, res) => {
         throw new Error('Name, description, price, image, and category are required.')
     }
 
+    if (isExternalStorageRequired() && !isExternalAssetUrl(image)) {
+        res.status(400)
+        throw new Error('Product image must be an external URL. Upload the file first using /api/uploads.')
+    }
+
     const category = await Category.findById(categoryId)
 
     if (!category) {
@@ -150,6 +156,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
     if (!name || !description || !image || !categoryId || Number.isNaN(price) || price <= 0) {
         res.status(400)
         throw new Error('Name, description, price, image, and category are required.')
+    }
+
+    if (isExternalStorageRequired() && !isExternalAssetUrl(image)) {
+        res.status(400)
+        throw new Error('Product image must be an external URL. Upload the file first using /api/uploads.')
     }
 
     const category = await Category.findById(categoryId)

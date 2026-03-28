@@ -28,6 +28,11 @@ const env = {
     smtpFrom: process.env.SMTP_FROM || 'Store Notifications <no-reply@example.com>',
     phoneDataSecret: process.env.PHONE_DATA_SECRET || process.env.JWT_SECRET || '',
     phoneDefaultCountryCode: process.env.PHONE_DEFAULT_COUNTRY_CODE || '+20',
+    uploadMaxBytes: Number(process.env.UPLOAD_MAX_BYTES) || (10 * 1024 * 1024),
+    cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
+    cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+    cloudinaryFolder: process.env.CLOUDINARY_FOLDER || 'react-work',
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
     twilioFromNumber: process.env.TWILIO_FROM_NUMBER || ''
@@ -57,6 +62,10 @@ export function getConfigDiagnostics() {
 
     if (isProduction && (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioFromNumber)) {
         warnings.push('Twilio SMS settings are incomplete. OTP delivery will use preview mode instead of SMS.')
+    }
+
+    if (isProduction && (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret)) {
+        warnings.push('Cloudinary storage is not configured. Upload endpoints will reject files in production.')
     }
 
     return {
