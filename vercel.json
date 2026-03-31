@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --prefix app1 && npm install --prefix app1/server",
+  "installCommand": "npm install --prefix frontend && npm install --prefix backend",
   "ignoreCommand": "node -e \"process.exit(1)\"",
-  "buildCommand": "npm run build --prefix app1",
-  "outputDirectory": "app1/dist",
+  "buildCommand": "npm run build --prefix frontend",
+  "outputDirectory": "frontend/dist",
   "routes": [
     {
       "src": "/assets/(.*)",

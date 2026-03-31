@@ -1,0 +1,322 @@
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes buttonGlow {
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(100, 50, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(100, 50, 255, 0.8);
+    }
+}
+
+@keyframes formSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.auth-page {
+    width: 90%;
+    margin: 10px auto;
+    border-radius: 15px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-wrapper {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    width: 100%;
+    max-width: 450px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.toggle-buttons {
+    display: flex;
+    background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+    padding: 10px;
+    gap: 10px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.toggle-btn:hover {
+    background: rgba(100, 50, 255, 0.1);
+    color: #6432ff;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 5px 15px rgba(100, 50, 255, 0.4);
+}
+
+.form-container {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+}
+
+.login-form,
+.signup-form {
+    position: absolute;
+    width: 100%;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateX(100px);
+    pointer-events: none;
+}
+
+.login-active .login-form,
+.signup-active .signup-form {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    animation: formSlideIn 0.5s ease-out;
+}
+
+.login-active .signup-form {
+    transform: translateX(100px);
+}
+
+.signup-active .login-form {
+    transform: translateX(-100px);
+}
+
+.login-form h1,
+.signup-form h1 {
+    text-align: center;
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    margin-top: 0;
+    animation: slideInLeft 0.6s ease-out;
+    font-weight: 700;
+}
+
+.form-status {
+    margin: -10px 0 18px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-status.success {
+    background: #e8fff1;
+    color: #167647;
+    border: 1px solid #95dfb3;
+}
+
+.form-status.error {
+    background: #fff1f1;
+    color: #bb2d3b;
+    border: 1px solid #efb4ba;
+}
+
+.login-form input,
+.signup-form input {
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #f8f9fa;
+    color: #333;
+    box-sizing: border-box;
+    animation: slideInRight 0.6s ease-out backwards;
+}
+
+.login-form input:nth-child(2),
+.signup-form input:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.login-form input:nth-child(3),
+.signup-form input:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.signup-form input:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.login-form input::placeholder,
+.signup-form input::placeholder {
+    color: #999;
+    font-weight: 500;
+}
+
+.login-form input:focus,
+.signup-form input:focus {
+    outline: none;
+    border-color: #6432ff;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(100, 50, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.login-form input:hover,
+.signup-form input:hover {
+    border-color: #6432ff;
+    background: white;
+}
+
+.login-form .btn,
+.signup-form .btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.8s ease-out 0.3s backwards, buttonGlow 3s ease-in-out 1s infinite;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(100, 50, 255, 0.4);
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.login-form .btn:hover,
+.signup-form .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(100, 50, 255, 0.6);
+}
+
+.login-form .btn:active,
+.signup-form .btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(100, 50, 255, 0.4);
+}
+
+.login-form .btn:disabled,
+.signup-form .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.form-text {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+    animation: fadeInUp 0.8s ease-out 0.4s backwards;
+}
+
+.form-text span {
+    color: #6432ff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-text span:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .form-wrapper {
+        max-width: 100%;
+    }
+
+    .form-container {
+        height: auto;
+        min-height: 450px;
+    }
+
+    .login-form,
+    .signup-form {
+        padding: 30px 20px;
+    }
+
+    .login-form h1,
+    .signup-form h1 {
+        font-size: 1.7rem;
+        margin-bottom: 20px;
+    }
+
+    .login-form input,
+    .signup-form input {
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+    }
+
+    .login-form .btn,
+    .signup-form .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    .toggle-btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+}

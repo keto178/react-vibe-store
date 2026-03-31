@@ -1,5 +1,13 @@
 {
   "name": "react-work",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "start:backend": "npm --prefix backend run start"
+  }
 }
