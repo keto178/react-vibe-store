@@ -3,10 +3,12 @@ import env from './config/env.js'
 import { bootstrapApplication } from './app/bootstrap.js'
 
 async function startServer() {
-    await bootstrapApplication()
+    const bootstrapSummary = await bootstrapApplication()
 
     app.listen(env.port, () => {
-        console.log(`API server running on http://localhost:${env.port} with MongoDB and ${env.storageProvider} storage`)
+        console.log(
+            `API server running on http://localhost:${env.port} with MongoDB and ${bootstrapSummary.objectStorage.mode} object storage`
+        )
     })
 }
 

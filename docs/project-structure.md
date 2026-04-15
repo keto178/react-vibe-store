@@ -65,6 +65,7 @@ This repository is organized around a React storefront and a production-hardened
 
 ## Notes
 
-- Production startup now fails fast if MongoDB, JWT, phone-encryption, or object-storage configuration is missing.
-- Critical business data no longer uses file, memory, or blob-JSON fallback persistence.
+- Production uses MongoDB Atlas as the primary persistence backend whenever bootstrap succeeds.
+- The Vercel bridge can fall back to file, memory, or Vercel Blob runtime persistence only when MongoDB is missing or unavailable.
+- JWT, admin bootstrap, and phone-encryption secrets remain hard startup requirements; object-storage and Twilio configuration are feature-level concerns.
 - Root-level backend `routes/`, `controllers/`, `models/`, `middleware/`, and selected `services/` files are compatibility shims that point to the canonical `backend/src/app/` implementation.

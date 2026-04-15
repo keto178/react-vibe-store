@@ -9,6 +9,10 @@ function applyCaseInsensitiveNameMatch(query) {
 }
 
 export const CategoryRepository = {
+    count(options = {}) {
+        return applySession(Category.countDocuments({}), options.session)
+    },
+
     list(options = {}) {
         return applySession(
             Category.find().sort({ group: 1, name: 1 }),

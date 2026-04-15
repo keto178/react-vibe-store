@@ -1,11 +1,24 @@
 import env from '../config/env.js'
 import { AppError } from '../app/errors/AppError.js'
 
+const TWILIO_PREVIEW_ACCOUNT_SID = 'AC00000000000000000000000000000000'
+const TWILIO_PREVIEW_AUTH_TOKEN = '00000000000000000000000000000000'
+const TWILIO_PREVIEW_FROM_NUMBER = '+15005550006'
+
+function isTwilioPreviewModeConfigured() {
+    return (
+        env.twilioAccountSid === TWILIO_PREVIEW_ACCOUNT_SID &&
+        env.twilioAuthToken === TWILIO_PREVIEW_AUTH_TOKEN &&
+        env.twilioFromNumber === TWILIO_PREVIEW_FROM_NUMBER
+    )
+}
+
 function isTwilioConfigured() {
     return Boolean(
         env.twilioAccountSid &&
         env.twilioAuthToken &&
-        env.twilioFromNumber
+        env.twilioFromNumber &&
+        !isTwilioPreviewModeConfigured()
     )
 }
 
@@ -46,6 +59,15 @@ async function sendSmsWithTwilio({ to, message }) {
 
 export async function sendPhoneVerificationCodeSms({ phoneNumber, code }) {
     const smsMessage = `Your verification code is: ${code}`
+
+    if (isTwilioPreviewModeConfigured()) {
+        return {
+            delivery: 'preview',
+            provider: 'twilio-preview',
+            verificationCode: code,
+            message: 'SMS preview mode is enabled for this deployment.'
+        }
+    }
 
     if (!isTwilioConfigured()) {
         if (env.isProduction) {

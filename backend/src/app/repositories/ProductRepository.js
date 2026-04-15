@@ -9,6 +9,10 @@ function withCategory(query) {
 }
 
 export const ProductRepository = {
+    count(options = {}) {
+        return applySession(Product.countDocuments({}), options.session)
+    },
+
     list(filters = {}, options = {}) {
         const query = {}
 

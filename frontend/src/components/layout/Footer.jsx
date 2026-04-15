@@ -17,7 +17,9 @@ export default function Footer({ activeSession }) {
                     </Link>
                 </nav>
             </div>
-
+            <div>
+                <h2>email :engaks159@gmail.com</h2>
+            </div>
             <p className='site-footer-copy'>&copy; {new Date().getFullYear()} All rights reserved.</p>
         </footer>
     )

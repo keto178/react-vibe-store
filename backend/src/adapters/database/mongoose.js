@@ -27,6 +27,7 @@ function getReadyStateName(state) {
 
 export function getDatabaseDebugState() {
     return {
+        configured: Boolean(env.mongoUri),
         readyState: mongoose.connection.readyState,
         readyStateName: getReadyStateName(mongoose.connection.readyState),
         host: mongoose.connection.host || '',

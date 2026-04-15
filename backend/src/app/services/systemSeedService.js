@@ -2,6 +2,22 @@ import bcrypt from 'bcryptjs'
 import env from '../../config/env.js'
 import { UserRepository } from '../repositories/UserRepository.js'
 
+function toId(value) {
+    if (!value) {
+        return ''
+    }
+
+    if (typeof value === 'string') {
+        return value
+    }
+
+    if (typeof value.toString === 'function') {
+        return value.toString()
+    }
+
+    return ''
+}
+
 export async function ensureSystemAdminUser() {
     const normalizedAdminEmail = env.adminEmail.trim().toLowerCase()
     const normalizedAdminUsername = env.adminUsername.trim().toLowerCase()
@@ -13,7 +29,7 @@ export async function ensureSystemAdminUser() {
     if (!existingAdmin) {
         const passwordHash = await bcrypt.hash(env.adminPassword, 10)
 
-        await UserRepository.create({
+        const createdAdmin = await UserRepository.create({
             username: normalizedAdminUsername,
             email: normalizedAdminEmail,
             passwordHash,
@@ -30,7 +46,11 @@ export async function ensureSystemAdminUser() {
             }
         })
 
-        return
+        return {
+            status: 'created',
+            userId: toId(createdAdmin?._id),
+            email: normalizedAdminEmail
+        }
     }
 
     const passwordMatches = await bcrypt.compare(env.adminPassword, existingAdmin.passwordHash)
@@ -41,7 +61,11 @@ export async function ensureSystemAdminUser() {
     )
 
     if (!hasIdentityChanges && passwordMatches) {
-        return
+        return {
+            status: 'unchanged',
+            userId: toId(existingAdmin?._id),
+            email: normalizedAdminEmail
+        }
     }
 
     if (!passwordMatches) {
@@ -63,4 +87,10 @@ export async function ensureSystemAdminUser() {
     }
 
     await UserRepository.save(existingAdmin)
+
+    return {
+        status: 'updated',
+        userId: toId(existingAdmin?._id),
+        email: normalizedAdminEmail
+    }
 }
