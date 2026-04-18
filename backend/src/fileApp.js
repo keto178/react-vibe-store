@@ -736,13 +736,11 @@ app.post('/api/categories', authenticate, requirePhoneVerified, requireAdmin, as
         return
     }
 
-    if (!isAllowedExistingAssetValue(image, category.image)) {
-        try {
-            assertManagedAssetUrl(image, 'Category image')
-        } catch (error) {
-            sendError(res, 400, error.message)
-            return
-        }
+    try {
+        assertManagedAssetUrl(image, 'Category image')
+    } catch (error) {
+        sendError(res, 400, error.message)
+        return
     }
 
     const duplicateCategory = store.categories.find((category) => (
@@ -791,11 +789,13 @@ app.put('/api/categories/:categoryId', authenticate, requirePhoneVerified, requi
         return
     }
 
-    try {
-        assertManagedAssetUrl(image, 'Category image')
-    } catch (error) {
-        sendError(res, 400, error.message)
-        return
+    if (!isAllowedExistingAssetValue(image, category.image)) {
+        try {
+            assertManagedAssetUrl(image, 'Category image')
+        } catch (error) {
+            sendError(res, 400, error.message)
+            return
+        }
     }
 
     const duplicateCategory = store.categories.find((item) => (
@@ -921,13 +921,11 @@ app.post('/api/products', authenticate, requirePhoneVerified, requireAdmin, asyn
         return
     }
 
-    if (!isAllowedExistingAssetValue(req.body.image.trim(), product.image)) {
-        try {
-            assertManagedAssetUrl(req.body.image.trim(), 'Product image')
-        } catch (error) {
-            sendError(res, 400, error.message)
-            return
-        }
+    try {
+        assertManagedAssetUrl(req.body.image.trim(), 'Product image')
+    } catch (error) {
+        sendError(res, 400, error.message)
+        return
     }
 
     if (Number(req.body.price) <= 0) {
@@ -987,11 +985,13 @@ app.put('/api/products/:productId', authenticate, requirePhoneVerified, requireA
         return
     }
 
-    try {
-        assertManagedAssetUrl(req.body.image.trim(), 'Product image')
-    } catch (error) {
-        sendError(res, 400, error.message)
-        return
+    if (!isAllowedExistingAssetValue(req.body.image.trim(), product.image)) {
+        try {
+            assertManagedAssetUrl(req.body.image.trim(), 'Product image')
+        } catch (error) {
+            sendError(res, 400, error.message)
+            return
+        }
     }
 
     if (Number(req.body.price) <= 0) {
