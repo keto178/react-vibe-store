@@ -33,3 +33,5 @@ lerna-debug.log*
 # Local artifacts
 legacy/local-artifacts/
 *.msi
+
+.vercel
