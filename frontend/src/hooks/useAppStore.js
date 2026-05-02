@@ -66,9 +66,9 @@ export function useAppStore(activeSession) {
     const sessionId = activeSession?.id || ''
     const sessionRole = activeSession?.role || ''
     const hasSession = Boolean(sessionId)
-    const requiresPhoneVerification = Boolean(activeSession?.requiresPhoneVerification)
+    const requiresEmailVerification = Boolean(activeSession?.requiresEmailVerification)
     const offlineFeatureMessage = getWriteAccessMessage(serverHealth)
-    const phoneVerificationRequiredMessage = 'Verify your phone number to continue.'
+    const emailVerificationRequiredMessage = 'Verify your email address to continue.'
 
     const refreshCatalog = async () => {
         const [categoriesResponse, productsResponse] = await Promise.all([
@@ -86,7 +86,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             setCartItems([])
             return
         }
@@ -113,7 +113,7 @@ export function useAppStore(activeSession) {
                 const nextServerHealth = healthResult.status === 'fulfilled'
                     ? normalizeServerHealth(healthResult.value)
                     : DEFAULT_SERVER_HEALTH
-                const shouldLoadSessionData = hasSession && !requiresPhoneVerification
+                const shouldLoadSessionData = hasSession && !requiresEmailVerification
 
                 if (shouldLoadSessionData) {
                     const guestCartItems = readGuestCartItems()
@@ -173,7 +173,7 @@ export function useAppStore(activeSession) {
                     return
                 }
 
-                if (requiresPhoneVerification) {
+                if (requiresEmailVerification) {
                     setCartItems([])
                     setOrders([])
                     return
@@ -209,7 +209,7 @@ export function useAppStore(activeSession) {
                     setOrders([])
                 }
 
-                if (requiresPhoneVerification) {
+                if (requiresEmailVerification) {
                     setCartItems([])
                     setOrders([])
                 }
@@ -223,7 +223,7 @@ export function useAppStore(activeSession) {
         return () => {
             isCancelled = true
         }
-    }, [hasSession, requiresPhoneVerification, sessionId, sessionRole])
+    }, [hasSession, requiresEmailVerification, sessionId, sessionRole])
 
     const handleAddProduct = async (product) => {
         if (offlineFeatureMessage) {
@@ -328,10 +328,10 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return {
                 ok: false,
-                message: phoneVerificationRequiredMessage
+                message: emailVerificationRequiredMessage
             }
         }
 
@@ -372,7 +372,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return
         }
 
@@ -401,7 +401,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return
         }
 
@@ -418,17 +418,10 @@ export function useAppStore(activeSession) {
     }
 
     const handlePlaceOrder = async (shippingDetails) => {
-        if (!activeSession) {
+        if (requiresEmailVerification) {
             return {
                 ok: false,
-                message: 'Please log in before placing an order.'
-            }
-        }
-
-        if (requiresPhoneVerification) {
-            return {
-                ok: false,
-                message: phoneVerificationRequiredMessage
+                message: emailVerificationRequiredMessage
             }
         }
 
@@ -440,11 +433,19 @@ export function useAppStore(activeSession) {
         }
 
         try {
-            const response = await checkoutApi(shippingDetails)
+            const response = await checkoutApi({
+                ...shippingDetails,
+                items: activeSession ? undefined : cartItems
+            })
             const savedOrder = ensureRecord(response?.order, 'order')
 
-            setOrders((currentOrders) => [savedOrder, ...currentOrders])
+            if (activeSession) {
+                setOrders((currentOrders) => [savedOrder, ...currentOrders])
+            }
             setCartItems([])
+            if (!activeSession) {
+                clearGuestCartItems()
+            }
 
             return {
                 ok: true,
@@ -463,7 +464,7 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return
         }
 
@@ -487,10 +488,10 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return {
                 ok: false,
-                message: phoneVerificationRequiredMessage
+                message: emailVerificationRequiredMessage
             }
         }
 
@@ -530,10 +531,10 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (requiresPhoneVerification) {
+        if (requiresEmailVerification) {
             return {
                 ok: false,
-                message: phoneVerificationRequiredMessage
+                message: emailVerificationRequiredMessage
             }
         }
 

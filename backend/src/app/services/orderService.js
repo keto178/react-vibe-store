@@ -71,6 +71,35 @@ function buildOrderItemSnapshot(cartItem) {
     }
 }
 
+async function buildGuestOrderItemSnapshot(item, session) {
+    const productId = String(item?.productId || item?.id || '').trim()
+    const quantity = Math.max(1, Math.floor(Number(item?.quantity) || 1))
+
+    if (!productId) {
+        throw new AppError(400, 'CHECKOUT_ITEM_INVALID', 'One or more checkout items are invalid.')
+    }
+
+    const product = await ProductRepository.findByIdWithCategory(productId, { session })
+
+    if (!product || !product.category) {
+        throw new AppError(409, 'CHECKOUT_PRODUCT_UNAVAILABLE', 'One or more items in your cart are no longer available.')
+    }
+
+    const orderItem = buildOrderItemSnapshot({
+        product,
+        quantity,
+        selectedColor: String(item?.selectedColor || product.colors?.[0] || '#5dc0ff').trim()
+    })
+
+    return {
+        orderItem,
+        inventoryItem: {
+            product,
+            quantity
+        }
+    }
+}
+
 async function applyInventoryAdjustments(cartItems, session) {
     for (const cartItem of cartItems) {
         const product = cartItem.product
@@ -91,32 +120,53 @@ async function applyInventoryAdjustments(cartItems, session) {
 export async function checkout(user, payload) {
     const customer = buildCustomer(payload)
     const order = await runInTransaction(async (session) => {
-        const cart = await CartRepository.findOrCreateByUserId(user._id, {
-            session,
-            populate: true
-        })
+        let cart = null
+        let orderItems = []
+        let inventoryItems = []
 
-        if (!cart || cart.items.length === 0) {
-            throw new AppError(400, 'CHECKOUT_CART_EMPTY', 'Your cart is empty. Add products before checking out.')
+        if (user) {
+            cart = await CartRepository.findOrCreateByUserId(user._id, {
+                session,
+                populate: true
+            })
+
+            if (!cart || cart.items.length === 0) {
+                throw new AppError(400, 'CHECKOUT_CART_EMPTY', 'Your cart is empty. Add products before checking out.')
+            }
+
+            orderItems = cart.items.map(buildOrderItemSnapshot)
+            inventoryItems = cart.items
+        } else {
+            const guestItems = Array.isArray(payload?.items) ? payload.items : []
+
+            if (guestItems.length === 0) {
+                throw new AppError(400, 'CHECKOUT_CART_EMPTY', 'Your cart is empty. Add products before checking out.')
+            }
+
+            const guestSnapshots = await Promise.all(
+                guestItems.map((item) => buildGuestOrderItemSnapshot(item, session))
+            )
+            orderItems = guestSnapshots.map((item) => item.orderItem)
+            inventoryItems = guestSnapshots.map((item) => item.inventoryItem)
         }
-
-        const orderItems = cart.items.map(buildOrderItemSnapshot)
 
         if (orderItems.length === 0) {
             throw new AppError(400, 'CHECKOUT_CART_EMPTY', 'No valid cart items were available for checkout.')
         }
 
-        await applyInventoryAdjustments(cart.items, session)
+        await applyInventoryAdjustments(inventoryItems, session)
 
         const createdOrder = await OrderRepository.create({
-            user: user._id,
+            user: user?._id || null,
             items: orderItems,
             customer,
-            customerSession: {
-                userId: user._id,
-                username: user.username,
-                email: user.email
-            },
+            customerSession: user
+                ? {
+                    userId: user._id,
+                    username: user.username,
+                    email: user.email
+                }
+                : null,
             summary: calculateOrderSummary(orderItems),
             status: 'pending',
             emailNotification: {
@@ -126,8 +176,10 @@ export async function checkout(user, payload) {
             isUnread: true
         }, { session })
 
-        cart.items = []
-        await CartRepository.save(cart, { session })
+        if (cart) {
+            cart.items = []
+            await CartRepository.save(cart, { session })
+        }
 
         return createdOrder
     })

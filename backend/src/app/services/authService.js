@@ -3,6 +3,7 @@ import env from '../../config/env.js'
 import { AppError } from '../errors/AppError.js'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { encryptPhoneNumber } from '../../services/phoneCrypto.js'
+import { sendEmailVerificationCodeEmail } from '../../services/emailService.js'
 import { sendPhoneVerificationCodeSms } from '../../services/smsService.js'
 import { signAuthToken } from './authTokenService.js'
 import { serializeUser } from '../utils/serializers.js'
@@ -19,6 +20,35 @@ import {
     isValidPhoneNumber,
     normalizePhoneNumber
 } from '../../utils/phoneVerification.js'
+
+const EMAIL_OTP_LENGTH = 6
+const EMAIL_OTP_TTL_MS = 10 * 60 * 1000
+const EMAIL_OTP_MAX_ATTEMPTS = 5
+
+function createEmailVerificationCode() {
+    const min = 10 ** (EMAIL_OTP_LENGTH - 1)
+    const max = (10 ** EMAIL_OTP_LENGTH) - 1
+    return String(Math.floor(Math.random() * (max - min + 1)) + min)
+}
+
+function buildEmailVerificationRecord(codeHash) {
+    const requestedAt = new Date()
+
+    return {
+        codeHash,
+        attempts: 0,
+        requestedAt,
+        expiresAt: new Date(requestedAt.getTime() + EMAIL_OTP_TTL_MS)
+    }
+}
+
+function isEmailVerificationExpired(emailVerification) {
+    if (!emailVerification?.expiresAt) {
+        return true
+    }
+
+    return new Date(emailVerification.expiresAt).getTime() <= Date.now()
+}
 
 function buildAuthRequestMeta(requestMeta = {}) {
     return {
@@ -56,7 +86,15 @@ export async function registerUser(payload) {
         email,
         passwordHash,
         role: 'user',
-        phoneVerified: false,
+        emailVerified: false,
+        emailVerifiedAt: null,
+        emailVerification: {
+            codeHash: '',
+            attempts: 0,
+            requestedAt: null,
+            expiresAt: null
+        },
+        phoneVerified: true,
         phoneNumberEncrypted: '',
         phoneNumberLast4: '',
         phoneVerification: {
@@ -70,6 +108,105 @@ export async function registerUser(payload) {
     return {
         message: 'Registration successful.',
         token: signAuthToken(user),
+        user: serializeUser(user)
+    }
+}
+
+export async function requestEmailVerificationCode(user) {
+    if (user?.role === 'admin') {
+        throw new AppError(400, 'EMAIL_VERIFICATION_NOT_REQUIRED', 'Admin accounts do not require email verification.')
+    }
+
+    if (user?.emailVerified) {
+        throw new AppError(409, 'EMAIL_ALREADY_VERIFIED', 'Email address is already verified for this account.')
+    }
+
+    const verificationCode = createEmailVerificationCode()
+    const verificationCodeHash = await hashPhoneVerificationCode(verificationCode)
+
+    user.emailVerification = buildEmailVerificationRecord(verificationCodeHash)
+    await UserRepository.save(user)
+
+    const deliveryResult = await sendEmailVerificationCodeEmail({
+        email: user.email,
+        username: user.username,
+        code: verificationCode
+    })
+
+    return {
+        message: deliveryResult.message || 'Verification code sent by email.',
+        delivery: deliveryResult.delivery,
+        otpLength: EMAIL_OTP_LENGTH,
+        expiresInSeconds: Math.floor(EMAIL_OTP_TTL_MS / 1000),
+        verificationCode: deliveryResult.verificationCode || ''
+    }
+}
+
+export async function verifyEmailCode(user, payload) {
+    if (user?.role === 'admin') {
+        throw new AppError(400, 'EMAIL_VERIFICATION_NOT_REQUIRED', 'Admin accounts do not require email verification.')
+    }
+
+    if (user?.emailVerified) {
+        return {
+            message: 'Email address already verified.',
+            user: serializeUser(user)
+        }
+    }
+
+    const code = String(payload?.code || '').trim()
+
+    if (!/^\d{4,6}$/.test(code)) {
+        throw new AppError(400, 'EMAIL_CODE_INVALID', 'Please enter a valid verification code.')
+    }
+
+    const verificationRecord = user?.emailVerification
+
+    if (!verificationRecord?.codeHash || !verificationRecord?.expiresAt) {
+        throw new AppError(
+            400,
+            'EMAIL_CODE_REQUEST_REQUIRED',
+            'Request a verification code before confirming your email address.'
+        )
+    }
+
+    if (isEmailVerificationExpired(verificationRecord)) {
+        user.emailVerification = {
+            codeHash: '',
+            attempts: 0,
+            requestedAt: null,
+            expiresAt: null
+        }
+        await UserRepository.save(user)
+
+        throw new AppError(400, 'EMAIL_CODE_EXPIRED', 'Verification code expired. Request a new code.')
+    }
+
+    if ((Number(verificationRecord.attempts) || 0) >= EMAIL_OTP_MAX_ATTEMPTS) {
+        throw new AppError(429, 'EMAIL_CODE_RATE_LIMITED', 'Too many invalid attempts. Request a new verification code.')
+    }
+
+    const isCodeValid = await comparePhoneVerificationCode(code, verificationRecord.codeHash)
+
+    if (!isCodeValid) {
+        user.emailVerification.attempts = (Number(verificationRecord.attempts) || 0) + 1
+        await UserRepository.save(user)
+
+        throw new AppError(401, 'EMAIL_CODE_INVALID', 'Invalid verification code.')
+    }
+
+    user.emailVerified = true
+    user.emailVerifiedAt = new Date()
+    user.emailVerification = {
+        codeHash: '',
+        attempts: 0,
+        requestedAt: null,
+        expiresAt: null
+    }
+    await UserRepository.save(user)
+
+    return {
+        message: 'Email address verified successfully.',
         user: serializeUser(user)
     }
 }

@@ -26,6 +26,8 @@ function buildSession(authPayload) {
         phoneMasked: user?.phoneMasked || '',
         isPhoneVerified: Boolean(user?.isPhoneVerified),
         requiresPhoneVerification: Boolean(user?.requiresPhoneVerification),
+        isEmailVerified: user?.isEmailVerified !== false,
+        requiresEmailVerification: Boolean(user?.requiresEmailVerification),
         token: authPayload?.token || user?.token || '',
         authMode: authPayload?.authMode || user?.authMode || 'api'
     }

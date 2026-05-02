@@ -18,8 +18,8 @@ const EMPTY_SIGNUP_FORM = {
 }
 
 function resolvePostAuthRoute(sessionUser) {
-    if (sessionUser?.requiresPhoneVerification) {
-        return '/VerifyPhone'
+    if (sessionUser?.requiresEmailVerification) {
+        return '/VerifyEmail'
     }
 
     return isDashboardOwner(sessionUser) ? '/Dashboard' : '/Home'

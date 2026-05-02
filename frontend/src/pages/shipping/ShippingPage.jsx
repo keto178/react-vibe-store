@@ -11,6 +11,7 @@ export default function ShippingPage({ activeSession, cartItems = [], onPlaceOrd
     const [form, setForm] = useState(() => createShippingForm(activeSession))
     const [status, setStatus] = useState({ type: '', text: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [completedOrder, setCompletedOrder] = useState(null)
     const summary = useMemo(() => calculateOrderSummary(cartItems), [cartItems])
 
     const handleChange = (event) => {
@@ -45,9 +46,30 @@ export default function ShippingPage({ activeSession, cartItems = [], onPlaceOrd
             return
         }
 
+        if (!activeSession) {
+            setCompletedOrder(result.order)
+            setIsSubmitting(false)
+            return
+        }
+
         navigate(`/Orders?highlight=${result.order.id}`, {
             replace: true
         })
+    }
+
+    if (completedOrder) {
+        return (
+            <section className='shipping-page'>
+                <div className='shipping-empty-state'>
+                    <h1>Order Confirmed</h1>
+                    <p>Your order #{completedOrder.id} was placed successfully. We will contact you using the shipping details you entered.</p>
+                    <div className='shipping-empty-actions'>
+                        <Link to="/Home" className='shipping-link-btn'>Continue Shopping</Link>
+                        <Link to="/Cart" className='shipping-outline-btn'>Back to Cart</Link>
+                    </div>
+                </div>
+            </section>
+        )
     }
 
     if (cartItems.length === 0) {

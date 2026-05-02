@@ -7,11 +7,17 @@ import {
     markOrdersAsSeen,
     updateOrderStatus
 } from '../controllers/orderController.js'
-import { authenticate, requireAdmin, requirePhoneVerified } from '../middleware/auth.js'
+import {
+    authenticate,
+    optionalAuthenticate,
+    requireAdmin,
+    requirePhoneVerified,
+    requireVerifiedSessionIfAuthenticated
+} from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.post('/checkout', authenticate, requirePhoneVerified, checkout)
+router.post('/checkout', optionalAuthenticate, requireVerifiedSessionIfAuthenticated, checkout)
 router.get('/me', authenticate, requirePhoneVerified, getOrdersForCurrentUser)
 router.get('/', authenticate, requirePhoneVerified, requireAdmin, getAllOrders)
 router.patch('/mark-seen', authenticate, requirePhoneVerified, requireAdmin, markOrdersAsSeen)

@@ -26,6 +26,32 @@ const userSchema = new mongoose.Schema(
             enum: ['user', 'admin'],
             default: 'user'
         },
+        emailVerified: {
+            type: Boolean,
+            default: false
+        },
+        emailVerifiedAt: {
+            type: Date,
+            default: null
+        },
+        emailVerification: {
+            codeHash: {
+                type: String,
+                default: ''
+            },
+            attempts: {
+                type: Number,
+                default: 0
+            },
+            requestedAt: {
+                type: Date,
+                default: null
+            },
+            expiresAt: {
+                type: Date,
+                default: null
+            }
+        },
         phoneNumberEncrypted: {
             type: String,
             default: ''

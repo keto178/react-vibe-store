@@ -95,3 +95,43 @@ export async function sendAdminOrderEmail(order) {
         message: `Admin notification sent to ${env.adminNotificationEmail}.`
     }
 }
+
+export async function sendEmailVerificationCodeEmail({ email, username, code }) {
+    const transporter = createTransporter()
+
+    if (!transporter) {
+        return {
+            delivery: 'preview',
+            message: 'SMTP is not configured. Verification code is available in preview mode.',
+            verificationCode: code
+        }
+    }
+
+    await transporter.sendMail({
+        from: env.smtpFrom,
+        to: email,
+        subject: 'Verify your email address',
+        text: [
+            `Hi ${username || 'there'},`,
+            '',
+            `Your verification code is: ${code}`,
+            '',
+            'Enter this code to finish verifying your account.'
+        ].join('\n'),
+        html: `
+            <div style="font-family:Arial,sans-serif;color:#111827;">
+                <h2>Verify your email address</h2>
+                <p>Hi ${username || 'there'},</p>
+                <p>Use this code to finish verifying your account:</p>
+                <p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:20px 0;">${code}</p>
+                <p>If you did not request this code, you can ignore this email.</p>
+            </div>
+        `
+    })
+
+    return {
+        delivery: 'email',
+        message: `Verification code sent to ${email}.`,
+        verificationCode: ''
+    }
+}

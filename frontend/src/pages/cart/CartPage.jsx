@@ -13,11 +13,6 @@ export default function CartPage({ activeSession, cartItems = [], onUpdateCartQu
     const isGuest = !activeSession
 
     const handleContinueToShipping = () => {
-        if (isGuest) {
-            navigate('/Login')
-            return
-        }
-
         navigate('/Shipping')
     }
 
@@ -59,7 +54,7 @@ export default function CartPage({ activeSession, cartItems = [], onUpdateCartQu
                             className='cart-checkout-btn'
                             onClick={handleContinueToShipping}
                         >
-                            {isGuest ? 'Login to Checkout' : 'Continue to Shipping'}
+                            {isGuest ? 'Checkout as Guest' : 'Continue to Shipping'}
                         </button>
                     </aside>
                 </div>

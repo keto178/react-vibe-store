@@ -6,6 +6,9 @@ import ProductCard from '../../components/catalog/ProductCard'
 import CategoryListSection from './components/CategoryListSection'
 import AddToCartToast from './components/AddToCartToast'
 
+const INITIAL_VISIBLE_PRODUCT_COUNT = 12
+const PRODUCT_BATCH_SIZE = 12
+
 export default function HomePage({
     categories = [],
     products = [],
@@ -20,6 +23,11 @@ export default function HomePage({
     const [cartToast, setCartToast] = useState(null)
     const [mobileSortOrder, setMobileSortOrder] = useState('featured')
     const [mobileViewMode, setMobileViewMode] = useState('grid')
+    const productViewKey = `${selectedCategoryId || 'all'}|${activeSearchTerm}|${mobileSortOrder}`
+    const [productViewState, setProductViewState] = useState({
+        key: productViewKey,
+        visibleCount: INITIAL_VISIBLE_PRODUCT_COUNT
+    })
     const activeSearchTerm = searchParams.get('search')?.trim() || ''
     const normalizedSearchTerm = activeSearchTerm.toLowerCase()
     const hasSearchTerm = normalizedSearchTerm.length > 0
@@ -58,6 +66,11 @@ export default function HomePage({
 
         return nextProducts
     }, [filteredProducts, mobileSortOrder])
+    const visibleProductCount = productViewState.key === productViewKey
+        ? productViewState.visibleCount
+        : INITIAL_VISIBLE_PRODUCT_COUNT
+    const visibleProducts = sortedProducts.slice(0, visibleProductCount)
+    const hasMoreProducts = visibleProductCount < sortedProducts.length
 
     const scrollToProducts = () => {
         productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -111,6 +124,37 @@ export default function HomePage({
 
         return () => window.clearTimeout(timeoutId)
     }, [cartToast])
+
+    useEffect(() => {
+        if (!hasMoreProducts) {
+            return undefined
+        }
+
+        const loadNextBatch = () => {
+            setProductViewState((currentState) => {
+                const currentCount = currentState.key === productViewKey
+                    ? currentState.visibleCount
+                    : INITIAL_VISIBLE_PRODUCT_COUNT
+
+                return {
+                    key: productViewKey,
+                    visibleCount: Math.min(currentCount + PRODUCT_BATCH_SIZE, sortedProducts.length)
+                }
+            })
+        }
+        const idleId = 'requestIdleCallback' in window
+            ? window.requestIdleCallback(loadNextBatch, { timeout: 1400 })
+            : window.setTimeout(loadNextBatch, 450)
+
+        return () => {
+            if ('cancelIdleCallback' in window) {
+                window.cancelIdleCallback(idleId)
+                return
+            }
+
+            window.clearTimeout(idleId)
+        }
+    }, [hasMoreProducts, productViewKey, sortedProducts.length])
 
     useEffect(() => {
         if (!hasSearchTerm) {
@@ -232,8 +276,14 @@ export default function HomePage({
 
                 {sortedProducts.length > 0 ? (
                     <div className={`products-grid ${mobileViewMode === 'compact' ? 'products-grid-compact' : ''}`}>
-                        {sortedProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} onAddToCart={handleAddToCartFromHome} />
+                        {visibleProducts.map((product, index) => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                onAddToCart={handleAddToCartFromHome}
+                                imageLoading={index < 4 ? 'eager' : 'lazy'}
+                                imageFetchPriority={index < 4 ? 'high' : 'auto'}
+                            />
                         ))}
                     </div>
                 ) : isCatalogLoading ? (

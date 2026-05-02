@@ -3,7 +3,14 @@ import './ProductCard.css'
 import { formatPrice } from '../../utils/currency'
 import { formatNicotineLevel, sanitizeNicotineLevels } from '../../utils/nicotine'
 
-export default function ProductCard({ product, showAddButton = true, footerActions = null, onAddToCart = null }) {
+export default function ProductCard({
+    product,
+    showAddButton = true,
+    footerActions = null,
+    onAddToCart = null,
+    imageLoading = 'lazy',
+    imageFetchPriority = 'auto'
+}) {
     const [isAdded, setIsAdded] = useState(false)
     const rating = Math.max(0, Math.min(5, Number(product.rating ?? 4.5)))
     const discount = Number(product.discount) || 0
@@ -56,7 +63,8 @@ export default function ProductCard({ product, showAddButton = true, footerActio
                     className='product-card-image'
                     src={product.image}
                     alt={product.name}
-                    loading="lazy"
+                    loading={imageLoading}
+                    fetchPriority={imageFetchPriority}
                     decoding="async"
                 />
                 <span className='product-card-category'>{product.category}</span>

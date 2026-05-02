@@ -6,14 +6,14 @@ export default function ProtectedRoute({
     children,
     activeSession,
     requireAdmin = false,
-    requirePhoneVerificationComplete = true
+    requireEmailVerificationComplete = true
 }) {
     if (!activeSession) {
         return <Navigate to="/Login" replace />
     }
 
-    if (requirePhoneVerificationComplete && activeSession.requiresPhoneVerification) {
-        return <Navigate to="/VerifyPhone" replace />
+    if (requireEmailVerificationComplete && activeSession.requiresEmailVerification) {
+        return <Navigate to="/VerifyEmail" replace />
     }
 
     if (requireAdmin && !isDashboardOwner(activeSession)) {

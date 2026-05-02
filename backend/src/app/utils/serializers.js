@@ -38,6 +38,9 @@ export function serializeUser(user) {
     const isPhoneVerified = user?.role === 'admin'
         ? true
         : Boolean(user?.phoneVerified)
+    const isEmailVerified = user?.role === 'admin'
+        ? true
+        : Boolean(user?.emailVerified)
 
     return {
         id: toId(user?._id || user?.id),
@@ -46,7 +49,9 @@ export function serializeUser(user) {
         role: user?.role || 'user',
         phoneMasked: maskPhoneNumber(user?.phoneNumberLast4 || ''),
         isPhoneVerified,
-        requiresPhoneVerification: user?.role === 'admin' ? false : !isPhoneVerified
+        requiresPhoneVerification: false,
+        isEmailVerified,
+        requiresEmailVerification: user?.role === 'admin' ? false : !isEmailVerified
     }
 }
 

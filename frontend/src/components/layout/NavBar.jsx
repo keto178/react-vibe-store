@@ -27,9 +27,9 @@ const NavBar = memo(function NavBar({ activeSession, cartCount = 0, unreadOrders
     const isActivePath = (...paths) => paths.some((path) => path.toLowerCase() === currentPath)
     const isSearchActive = isMobileSearchOpen || currentSearchTerm.length > 0
     const accountPath = activeSession
-        ? (activeSession.requiresPhoneVerification ? '/VerifyPhone' : '/Orders')
+        ? (activeSession.requiresEmailVerification ? '/VerifyEmail' : '/Orders')
         : '/Login'
-    const isAccountActive = isActivePath('/Orders', '/Login', '/Signup', '/VerifyPhone')
+    const isAccountActive = isActivePath('/Orders', '/Login', '/Signup', '/VerifyEmail')
 
     const handleLogout = () => {
         clearActiveSession()

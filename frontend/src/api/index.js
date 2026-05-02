@@ -240,6 +240,19 @@ export function verifyPhoneVerificationCodeApi(payload) {
     })
 }
 
+export function requestEmailVerificationCodeApi() {
+    return apiRequest('/auth/email/request-code', {
+        method: 'POST'
+    })
+}
+
+export function verifyEmailVerificationCodeApi(payload) {
+    return apiRequest('/auth/email/verify-code', {
+        method: 'POST',
+        body: payload
+    })
+}
+
 export function uploadAssetApi(payload, options = {}) {
     if (typeof Blob !== 'undefined' && payload instanceof Blob) {
         const fileName = typeof payload.name === 'string' && payload.name.trim()

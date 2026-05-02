@@ -8,7 +8,7 @@ const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage'))
 const CartPage = lazy(() => import('../pages/cart/CartPage'))
 const ShippingPage = lazy(() => import('../pages/shipping/ShippingPage'))
 const OrdersPage = lazy(() => import('../pages/orders/OrdersPage'))
-const PhoneVerificationPage = lazy(() => import('../pages/phone-verification/PhoneVerificationPage'))
+const EmailVerificationPage = lazy(() => import('../pages/email-verification/EmailVerificationPage'))
 
 export default function AppRoutes({
     activeSession,
@@ -91,14 +91,12 @@ export default function AppRoutes({
                 <Route
                     path="/Shipping"
                     element={
-                        <ProtectedRoute activeSession={activeSession}>
-                            <ShippingPage
-                                key={activeSession?.id || 'guest-shipping'}
-                                activeSession={activeSession}
-                                cartItems={cartItems}
-                                onPlaceOrder={onPlaceOrder}
-                            />
-                        </ProtectedRoute>
+                        <ShippingPage
+                            key={activeSession?.id || 'guest-shipping'}
+                            activeSession={activeSession}
+                            cartItems={cartItems}
+                            onPlaceOrder={onPlaceOrder}
+                        />
                     }
                 />
                 <Route
@@ -116,13 +114,15 @@ export default function AppRoutes({
                     }
                 />
                 <Route
-                    path="/VerifyPhone"
+                    path="/VerifyEmail"
                     element={
-                        <ProtectedRoute activeSession={activeSession} requirePhoneVerificationComplete={false}>
-                            <PhoneVerificationPage activeSession={activeSession} />
+                        <ProtectedRoute activeSession={activeSession} requireEmailVerificationComplete={false}>
+                            <EmailVerificationPage activeSession={activeSession} />
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/VerifyPhone" element={<Navigate to="/VerifyEmail" replace />} />
+                
                 <Route path="/Login" element={<AuthPage initialMode="login" />} />
                 <Route path="/Signup" element={<AuthPage initialMode="signup" />} />
                 <Route
