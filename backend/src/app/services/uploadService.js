@@ -109,6 +109,22 @@ export function assertManagedAssetUrl(value, entityLabel = 'Asset') {
     }
 }
 
+function isLegacyDataUrl(value = '') {
+    return String(value || '').trim().startsWith('data:')
+}
+
+export function isAllowedExistingAssetValue(nextValue, currentValue) {
+    const normalizedNextValue = String(nextValue || '').trim()
+    const normalizedCurrentValue = String(currentValue || '').trim()
+
+    return Boolean(
+        normalizedNextValue &&
+        normalizedCurrentValue &&
+        normalizedNextValue === normalizedCurrentValue &&
+        isLegacyDataUrl(normalizedCurrentValue)
+    )
+}
+
 export async function uploadAssetFromDataUrl({ dataUrl, fileName = '', scope = 'uploads', maxBytes }) {
     const { mimeType, bytes, buffer } = parseDataUrl(dataUrl)
 

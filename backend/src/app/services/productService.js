@@ -5,6 +5,7 @@ import { ProductRepository } from '../repositories/ProductRepository.js'
 import { serializeProduct } from '../utils/serializers.js'
 import {
     assertManagedAssetUrl,
+    isAllowedExistingAssetValue,
     sanitizePersistedUploadMetadata
 } from './uploadService.js'
 
@@ -153,7 +154,9 @@ export async function updateProduct(productId, payload) {
         throw new AppError(400, 'PRODUCT_INVALID', 'Name, description, price, image, and category are required.')
     }
 
-    assertManagedAssetUrl(image, 'Product image')
+    if (!isAllowedExistingAssetValue(image, product.image)) {
+        assertManagedAssetUrl(image, 'Product image')
+    }
 
     const category = await CategoryRepository.findById(categoryId)
 

@@ -1,11 +1,26 @@
 import Product from '../models/Product.js'
 
+const CATALOG_PRODUCT_FIELDS = [
+    'name',
+    'description',
+    'price',
+    'discount',
+    'image',
+    'category',
+    'colors',
+    'nicotineLevels',
+    'inventoryQuantity',
+    'rating',
+    'createdAt',
+    'updatedAt'
+].join(' ')
+
 function applySession(query, session) {
     return session ? query.session(session) : query
 }
 
 function withCategory(query) {
-    return query.populate('category')
+    return query.populate('category', 'name group image')
 }
 
 export const ProductRepository = {
@@ -22,7 +37,9 @@ export const ProductRepository = {
 
         return withCategory(
             applySession(
-                Product.find(query).sort({ createdAt: -1 }),
+                Product.find(query)
+                    .select(CATALOG_PRODUCT_FIELDS)
+                    .sort({ createdAt: -1 }),
                 options.session
             )
         )

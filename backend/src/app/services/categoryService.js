@@ -5,6 +5,7 @@ import { ProductRepository } from '../repositories/ProductRepository.js'
 import { serializeCategory } from '../utils/serializers.js'
 import {
     assertManagedAssetUrl,
+    isAllowedExistingAssetValue,
     sanitizePersistedUploadMetadata
 } from './uploadService.js'
 
@@ -62,7 +63,9 @@ export async function updateCategory(categoryId, payload) {
         throw new AppError(400, 'CATEGORY_INVALID', 'Category name and image are required.')
     }
 
-    assertManagedAssetUrl(nextImage, 'Category image')
+    if (!isAllowedExistingAssetValue(nextImage, category.image)) {
+        assertManagedAssetUrl(nextImage, 'Category image')
+    }
 
     const duplicateCategory = await CategoryRepository.findByNameAndGroup({
         name: nextName,

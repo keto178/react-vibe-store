@@ -23,12 +23,12 @@ export default function HomePage({
     const [cartToast, setCartToast] = useState(null)
     const [mobileSortOrder, setMobileSortOrder] = useState('featured')
     const [mobileViewMode, setMobileViewMode] = useState('grid')
+    const activeSearchTerm = searchParams.get('search')?.trim() || ''
     const productViewKey = `${selectedCategoryId || 'all'}|${activeSearchTerm}|${mobileSortOrder}`
     const [productViewState, setProductViewState] = useState({
         key: productViewKey,
         visibleCount: INITIAL_VISIBLE_PRODUCT_COUNT
     })
-    const activeSearchTerm = searchParams.get('search')?.trim() || ''
     const normalizedSearchTerm = activeSearchTerm.toLowerCase()
     const hasSearchTerm = normalizedSearchTerm.length > 0
     const deviceCategories = categories.filter((category) => (category.group || 'Device') === 'Device')
