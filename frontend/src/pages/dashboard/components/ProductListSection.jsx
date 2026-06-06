@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { memo } from 'react'
 import ProductCard from '../../../components/catalog/ProductCard'
 
-export default function ProductListSection({
+const ProductListSection = memo(function ProductListSection({
     products = [],
     isReadOnly = false,
     readOnlyMessage = '',
@@ -59,4 +59,6 @@ export default function ProductListSection({
             )}
         </section>
     )
-}
+})
+
+export default ProductListSection

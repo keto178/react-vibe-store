@@ -1,17 +1,14 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body{
+﻿body {
     font-family: 'Poppins', sans-serif;
     background: #eef3f8;
 }
-a{
+
+a {
     text-decoration: none;
     color: black;
 }
-.App{
+
+.App {
     width: min(1240px, 95%);
     margin: 0 auto;
 }

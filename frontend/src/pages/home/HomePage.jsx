@@ -31,27 +31,35 @@ export default function HomePage({
     })
     const normalizedSearchTerm = activeSearchTerm.toLowerCase()
     const hasSearchTerm = normalizedSearchTerm.length > 0
-    const deviceCategories = categories.filter((category) => (category.group || 'Device') === 'Device')
-    const liquidCategories = categories.filter((category) => (category.group || 'Device') === 'Liquid')
-    const selectedCategory = categories.find((category) => category.id === selectedCategoryId) || null
-    const categoryFilteredProducts = selectedCategory
-        ? products.filter((product) => (
-            product.categoryId === selectedCategory.id ||
-            product.category === selectedCategory.name
-        ))
-        : products
-    const filteredProducts = categoryFilteredProducts.filter((product) => {
+    const deviceCategories = useMemo(
+        () => categories.filter((category) => (category.group || 'Device') === 'Device'),
+        [categories]
+    )
+    const liquidCategories = useMemo(
+        () => categories.filter((category) => (category.group || 'Device') === 'Liquid'),
+        [categories]
+    )
+    const selectedCategory = useMemo(
+        () => categories.find((category) => category.id === selectedCategoryId) || null,
+        [categories, selectedCategoryId]
+    )
+    const filteredProducts = useMemo(() => {
+        const categoryFiltered = selectedCategory
+            ? products.filter((product) => (
+                product.categoryId === selectedCategory.id ||
+                product.category === selectedCategory.name
+            ))
+            : products
+
         if (!hasSearchTerm) {
-            return true
+            return categoryFiltered
         }
 
-        return [
-            product.name,
-            product.description,
-            product.category,
-            product.type
-        ].some((value) => String(value || '').toLowerCase().includes(normalizedSearchTerm))
-    })
+        return categoryFiltered.filter((product) => (
+            [product.name, product.description, product.category, product.type]
+                .some((value) => String(value || '').toLowerCase().includes(normalizedSearchTerm))
+        ))
+    }, [products, selectedCategory, hasSearchTerm, normalizedSearchTerm])
 
     const sortedProducts = useMemo(() => {
         const nextProducts = [...filteredProducts]

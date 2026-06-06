@@ -3,7 +3,7 @@ import './ProductCard.css'
 import { formatPrice } from '../../utils/currency'
 import { formatNicotineLevel, sanitizeNicotineLevels } from '../../utils/nicotine'
 
-export default function ProductCard({
+const ProductCard = React.memo(function ProductCard({
     product,
     showAddButton = true,
     footerActions = null,
@@ -150,4 +150,6 @@ export default function ProductCard({
             </div>
         </article>
     )
-}
+})
+
+export default ProductCard

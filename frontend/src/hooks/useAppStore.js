@@ -1,38 +1,18 @@
-import { useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { isDashboardOwner } from '../services/session'
 import {
-    addCartItemApi,
-    checkoutApi,
-    createCategoryApi,
-    createProductApi,
-    deleteCategoryApi,
-    deleteOrderApi,
-    deleteProductApi,
-    fetchAdminOrdersApi,
-    fetchApiHealthApi,
-    fetchCartApi,
-    fetchCategoriesApi,
-    fetchProductsApi,
-    fetchUserOrdersApi,
-    markOrdersAsSeenApi,
-    removeCartItemApi,
-    updateCartItemApi,
-    updateCategoryApi,
-    updateOrderStatusApi,
-    updateProductApi
+    addCartItemApi, checkoutApi, createCategoryApi, createProductApi,
+    deleteCategoryApi, deleteOrderApi, deleteProductApi, fetchAdminOrdersApi,
+    fetchApiHealthApi, fetchCartApi, fetchCategoriesApi, fetchProductsApi,
+    fetchUserOrdersApi, markOrdersAsSeenApi, removeCartItemApi,
+    updateCartItemApi, updateCategoryApi, updateOrderStatusApi, updateProductApi
 } from '../api'
 import {
-    addGuestCartItem,
-    clearGuestCartItems,
-    readGuestCartItems,
-    removeGuestCartItem,
-    saveGuestCartItems,
-    updateGuestCartItemQuantity
+    addGuestCartItem, clearGuestCartItems, readGuestCartItems,
+    removeGuestCartItem, saveGuestCartItems, updateGuestCartItemQuantity
 } from '../utils/guestCart'
 import {
-    DEFAULT_SERVER_HEALTH,
-    getWriteAccessMessage,
-    normalizeServerHealth
+    DEFAULT_SERVER_HEALTH, getWriteAccessMessage, normalizeServerHealth
 } from '../utils/serverHealth'
 
 function ensureArray(value) {
@@ -70,7 +50,19 @@ export function useAppStore(activeSession) {
     const offlineFeatureMessage = getWriteAccessMessage(serverHealth)
     const emailVerificationRequiredMessage = 'Verify your email address to continue.'
 
-    const refreshCatalog = async () => {
+    const activeSessionRef = useRef(activeSession)
+    activeSessionRef.current = activeSession
+
+    const offlineFeatureMessageRef = useRef(offlineFeatureMessage)
+    offlineFeatureMessageRef.current = offlineFeatureMessage
+
+    const requiresEmailVerificationRef = useRef(requiresEmailVerification)
+    requiresEmailVerificationRef.current = requiresEmailVerification
+
+    const isAdminRef = useRef(isAdmin)
+    isAdminRef.current = isAdmin
+
+    const refreshCatalog = useCallback(async () => {
         const [categoriesResponse, productsResponse] = await Promise.all([
             fetchCategoriesApi(),
             fetchProductsApi()
@@ -78,22 +70,24 @@ export function useAppStore(activeSession) {
 
         setCategories(ensureArray(categoriesResponse?.categories))
         setProducts(ensureArray(productsResponse?.products))
-    }
+    }, [])
 
-    const refreshCart = async () => {
-        if (!activeSession) {
+    const refreshCart = useCallback(async () => {
+        const session = activeSessionRef.current
+
+        if (!session) {
             setCartItems(readGuestCartItems())
             return
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             setCartItems([])
             return
         }
 
         const response = await fetchCartApi()
         setCartItems(ensureArray(response?.items))
-    }
+    }, [])
 
     useEffect(() => {
         let isCancelled = false
@@ -225,10 +219,9 @@ export function useAppStore(activeSession) {
         }
     }, [hasSession, requiresEmailVerification, sessionId, sessionRole])
 
-    const handleAddProduct = async (product) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleAddProduct = useCallback(async (product) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         const response = await createProductApi(product)
         const savedProduct = ensureRecord(response?.product, 'product')
@@ -236,12 +229,11 @@ export function useAppStore(activeSession) {
         setProducts((currentProducts) => [savedProduct, ...currentProducts])
 
         return savedProduct
-    }
+    }, [])
 
-    const handleUpdateProduct = async (updatedProduct) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleUpdateProduct = useCallback(async (updatedProduct) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         const response = await updateProductApi(updatedProduct.id, updatedProduct)
         const savedProduct = ensureRecord(response?.product, 'product')
@@ -252,17 +244,16 @@ export function useAppStore(activeSession) {
             ))
         )
 
-        if (activeSession) {
+        if (activeSessionRef.current) {
             await refreshCart()
         }
 
         return savedProduct
-    }
+    }, [refreshCart])
 
-    const handleDeleteProduct = async (productId) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleDeleteProduct = useCallback(async (productId) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         await deleteProductApi(productId)
 
@@ -270,15 +261,14 @@ export function useAppStore(activeSession) {
             currentProducts.filter((product) => product.id !== productId)
         )
 
-        if (activeSession) {
+        if (activeSessionRef.current) {
             await refreshCart()
         }
-    }
+    }, [refreshCart])
 
-    const handleAddCategory = async (category) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleAddCategory = useCallback(async (category) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         const response = await createCategoryApi(category)
         const savedCategory = ensureRecord(response?.category, 'category')
@@ -286,36 +276,34 @@ export function useAppStore(activeSession) {
         setCategories((currentCategories) => [savedCategory, ...currentCategories])
 
         return savedCategory
-    }
+    }, [])
 
-    const handleUpdateCategory = async (updatedCategory) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleUpdateCategory = useCallback(async (updatedCategory) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         await updateCategoryApi(updatedCategory.id, updatedCategory)
         await refreshCatalog()
 
-        if (activeSession) {
+        if (activeSessionRef.current) {
             await refreshCart()
         }
-    }
+    }, [refreshCatalog, refreshCart])
 
-    const handleDeleteCategory = async (categoryId) => {
-        if (offlineFeatureMessage) {
-            throw new Error(offlineFeatureMessage)
-        }
+    const handleDeleteCategory = useCallback(async (categoryId) => {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) throw new Error(msg)
 
         await deleteCategoryApi(categoryId)
         await refreshCatalog()
 
-        if (activeSession) {
+        if (activeSessionRef.current) {
             await refreshCart()
         }
-    }
+    }, [refreshCatalog, refreshCart])
 
-    const handleAddToCart = async (product, selectedColor) => {
-        if (!activeSession) {
+    const handleAddToCart = useCallback(async (product, selectedColor) => {
+        if (!activeSessionRef.current) {
             const nextGuestCartItems = saveGuestCartItems(
                 addGuestCartItem(cartItems, product, selectedColor)
             )
@@ -328,17 +316,18 @@ export function useAppStore(activeSession) {
             }
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             return {
                 ok: false,
                 message: emailVerificationRequiredMessage
             }
         }
 
-        if (offlineFeatureMessage) {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) {
             return {
                 ok: false,
-                message: offlineFeatureMessage
+                message: msg
             }
         }
 
@@ -360,10 +349,10 @@ export function useAppStore(activeSession) {
                 message: error.message
             }
         }
-    }
+    }, [cartItems])
 
-    const handleUpdateCartQuantity = async (cartItemId, nextQuantity) => {
-        if (!activeSession) {
+    const handleUpdateCartQuantity = useCallback(async (cartItemId, nextQuantity) => {
+        if (!activeSessionRef.current) {
             const nextGuestCartItems = saveGuestCartItems(
                 updateGuestCartItemQuantity(cartItems, cartItemId, nextQuantity)
             )
@@ -372,11 +361,11 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             return
         }
 
-        if (offlineFeatureMessage) {
+        if (offlineFeatureMessageRef.current) {
             return
         }
 
@@ -389,10 +378,10 @@ export function useAppStore(activeSession) {
         } catch (error) {
             logStoreError(error)
         }
-    }
+    }, [cartItems])
 
-    const handleRemoveFromCart = async (cartItemId) => {
-        if (!activeSession) {
+    const handleRemoveFromCart = useCallback(async (cartItemId) => {
+        if (!activeSessionRef.current) {
             const nextGuestCartItems = saveGuestCartItems(
                 removeGuestCartItem(cartItems, cartItemId)
             )
@@ -401,11 +390,11 @@ export function useAppStore(activeSession) {
             return
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             return
         }
 
-        if (offlineFeatureMessage) {
+        if (offlineFeatureMessageRef.current) {
             return
         }
 
@@ -415,35 +404,36 @@ export function useAppStore(activeSession) {
         } catch (error) {
             logStoreError(error)
         }
-    }
+    }, [cartItems])
 
-    const handlePlaceOrder = async (shippingDetails) => {
-        if (requiresEmailVerification) {
+    const handlePlaceOrder = useCallback(async (shippingDetails) => {
+        if (requiresEmailVerificationRef.current) {
             return {
                 ok: false,
                 message: emailVerificationRequiredMessage
             }
         }
 
-        if (offlineFeatureMessage) {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) {
             return {
                 ok: false,
-                message: offlineFeatureMessage
+                message: msg
             }
         }
 
         try {
             const response = await checkoutApi({
                 ...shippingDetails,
-                items: activeSession ? undefined : cartItems
+                items: activeSessionRef.current ? undefined : cartItems
             })
             const savedOrder = ensureRecord(response?.order, 'order')
 
-            if (activeSession) {
+            if (activeSessionRef.current) {
                 setOrders((currentOrders) => [savedOrder, ...currentOrders])
             }
             setCartItems([])
-            if (!activeSession) {
+            if (!activeSessionRef.current) {
                 clearGuestCartItems()
             }
 
@@ -457,20 +447,12 @@ export function useAppStore(activeSession) {
                 message: error.message
             }
         }
-    }
+    }, [cartItems])
 
-    const handleMarkOrdersAsSeen = async () => {
-        if (!isAdmin) {
-            return
-        }
-
-        if (requiresEmailVerification) {
-            return
-        }
-
-        if (offlineFeatureMessage) {
-            return
-        }
+    const handleMarkOrdersAsSeen = useCallback(async () => {
+        if (!isAdminRef.current) return
+        if (requiresEmailVerificationRef.current) return
+        if (offlineFeatureMessageRef.current) return
 
         try {
             const response = await markOrdersAsSeenApi()
@@ -478,27 +460,28 @@ export function useAppStore(activeSession) {
         } catch (error) {
             logStoreError(error)
         }
-    }
+    }, [])
 
-    const handleUpdateOrderStatus = async (orderId, nextStatus) => {
-        if (!isAdmin) {
+    const handleUpdateOrderStatus = useCallback(async (orderId, nextStatus) => {
+        if (!isAdminRef.current) {
             return {
                 ok: false,
                 message: 'Only admins can update order status.'
             }
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             return {
                 ok: false,
                 message: emailVerificationRequiredMessage
             }
         }
 
-        if (offlineFeatureMessage) {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) {
             return {
                 ok: false,
-                message: offlineFeatureMessage
+                message: msg
             }
         }
 
@@ -521,27 +504,28 @@ export function useAppStore(activeSession) {
                 message: error.message
             }
         }
-    }
+    }, [])
 
-    const handleDeleteOrder = async (orderId) => {
-        if (!isAdmin) {
+    const handleDeleteOrder = useCallback(async (orderId) => {
+        if (!isAdminRef.current) {
             return {
                 ok: false,
                 message: 'Only admins can remove orders.'
             }
         }
 
-        if (requiresEmailVerification) {
+        if (requiresEmailVerificationRef.current) {
             return {
                 ok: false,
                 message: emailVerificationRequiredMessage
             }
         }
 
-        if (offlineFeatureMessage) {
+        const msg = offlineFeatureMessageRef.current
+        if (msg) {
             return {
                 ok: false,
-                message: offlineFeatureMessage
+                message: msg
             }
         }
 
@@ -561,7 +545,7 @@ export function useAppStore(activeSession) {
                 message: error.message
             }
         }
-    }
+    }, [])
 
     return {
         products,

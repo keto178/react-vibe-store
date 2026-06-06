@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+﻿import React, { useEffect, useMemo } from 'react'
 import './App.css'
 import NavBar from '../components/layout/NavBar'
 import Footer from '../components/layout/Footer'
@@ -78,6 +78,37 @@ function App() {
     }
   }, [sessionAuthMode, sessionToken])
 
+  const appRoutesProps = useMemo(() => ({
+    activeSession,
+    categories,
+    products,
+    isCatalogLoading,
+    catalogError,
+    serverHealth,
+    cartItems,
+    orders,
+    onAddToCart: handleAddToCart,
+    onUpdateCartQuantity: handleUpdateCartQuantity,
+    onRemoveFromCart: handleRemoveFromCart,
+    onPlaceOrder: handlePlaceOrder,
+    onMarkOrdersAsSeen: handleMarkOrdersAsSeen,
+    onUpdateOrderStatus: handleUpdateOrderStatus,
+    onDeleteOrder: handleDeleteOrder,
+    onAddCategory: handleAddCategory,
+    onUpdateCategory: handleUpdateCategory,
+    onDeleteCategory: handleDeleteCategory,
+    onAddProduct: handleAddProduct,
+    onUpdateProduct: handleUpdateProduct,
+    onDeleteProduct: handleDeleteProduct
+  }), [
+    activeSession, categories, products, isCatalogLoading, catalogError,
+    serverHealth, cartItems, orders,
+    handleAddToCart, handleUpdateCartQuantity, handleRemoveFromCart,
+    handlePlaceOrder, handleMarkOrdersAsSeen, handleUpdateOrderStatus,
+    handleDeleteOrder, handleAddCategory, handleUpdateCategory, handleDeleteCategory,
+    handleAddProduct, handleUpdateProduct, handleDeleteProduct
+  ])
+
   return (
     <div className="App">
       <NavBar
@@ -95,29 +126,7 @@ function App() {
         </div>
       )}
       <main className="app-content">
-        <AppRoutes
-          activeSession={activeSession}
-          categories={categories}
-          products={products}
-          isCatalogLoading={isCatalogLoading}
-          catalogError={catalogError}
-          serverHealth={serverHealth}
-          cartItems={cartItems}
-          orders={orders}
-          onAddToCart={handleAddToCart}
-          onUpdateCartQuantity={handleUpdateCartQuantity}
-          onRemoveFromCart={handleRemoveFromCart}
-          onPlaceOrder={handlePlaceOrder}
-          onMarkOrdersAsSeen={handleMarkOrdersAsSeen}
-          onUpdateOrderStatus={handleUpdateOrderStatus}
-          onDeleteOrder={handleDeleteOrder}
-          onAddCategory={handleAddCategory}
-          onUpdateCategory={handleUpdateCategory}
-          onDeleteCategory={handleDeleteCategory}
-          onAddProduct={handleAddProduct}
-          onUpdateProduct={handleUpdateProduct}
-          onDeleteProduct={handleDeleteProduct}
-        />
+        <AppRoutes {...appRoutesProps} />
       </main>
       <Footer activeSession={activeSession} />
     </div>
